@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -77,10 +77,9 @@ public class GameLogic : MonoBehaviour
 
         //   從這裡切開   //
 
-        CheckAnswer(currentQuestionNumber);
+        //CheckAnswer(currentQuestionNumber);
         ShowScoreBoard();
 
-        //ShowAnswer(questionIDs[currentQuestionNumber]);
     }
 
     void Update()
@@ -95,24 +94,16 @@ public class GameLogic : MonoBehaviour
 
             if (Input.GetKeyDown(KeyCode.Space))
             {
-                ScoreBoard.AnswerRight(100);
-                CheckIsGameOver();
-                ShowQuestion(currentQuestionNumber);
-                ShowOptions(currentQuestionNumber);
-                ShowAnswer(currentQuestionNumber);
+                questions[currentQuestionNumber].FindAnswerNumber(4);   //上限 4 選項，暫時先寫死
+                answerNumber = questions[currentQuestionNumber].answerNumber;
+                whatIsYourChoice = answerNumber;
                 CheckAnswer(currentQuestionNumber);
-                ShowScoreBoard();
             }
 
             if (Input.GetKeyDown(KeyCode.Return))
             {
-                ScoreBoard.AnswerWrong(100);
-                CheckIsGameOver();
-                ShowQuestion(currentQuestionNumber);
-                ShowOptions(currentQuestionNumber);
-                ShowAnswer(currentQuestionNumber);
+                whatIsYourChoice = 111;
                 CheckAnswer(currentQuestionNumber);
-                ShowScoreBoard();
             }
         }
     }
@@ -187,7 +178,7 @@ public class GameLogic : MonoBehaviour
         if (counter < questionNumbers)
         {
             questionContents = questions[counter].questionContents;
-            questionContentsText.text = questions[counter].questionContents;
+            questionContentsText.text = "問題" + currentQuestionNumber.ToString() + ": " + questions[counter].questionContents;
         }
     }
 
@@ -201,9 +192,26 @@ public class GameLogic : MonoBehaviour
 
             for (int i = 0; i < optionNumbers; i++)
             {
-                optionContentsText[i].text = questions[counter].optionContents[i];
+                optionContentsText[i].text = AddPrefix(i) + questions[counter].optionContents[i];
                 optionsContents[i] = questions[counter].optionContents[i];
             }
+        }
+    }
+
+    private string AddPrefix(int i)
+    {
+        switch (i)
+        {
+            case 0:
+                return "(A) ";
+            case 1:
+                return "(B) ";
+            case 2:
+                return "(C) ";
+            case 3:
+                return "(D) ";
+            default:
+                return "(隱藏選項) ";
         }
     }
 
@@ -219,10 +227,7 @@ public class GameLogic : MonoBehaviour
     {
         whatIsYourChoice = youChooseNumber;
 
-        //CheckAnswer(currentQuestionNumber);
-
-         
-
+        CheckAnswer(currentQuestionNumber);
 
     }
 
@@ -233,16 +238,31 @@ public class GameLogic : MonoBehaviour
             questions[counter].FindAnswerNumber(4);   //上限 4 選項，暫時先寫死
             answerNumber = questions[counter].answerNumber;
 
+            Debug.Log("答案是" + answerNumber + ": " + questions[counter].answerContents);
+            Debug.Log("我選的是" + whatIsYourChoice.ToString() + ": " + questions[counter].optionContents[whatIsYourChoice]);
+
             if (whatIsYourChoice == answerNumber)
             {
                 Debug.Log("回答正確");
 
+                ScoreBoard.AnswerRight(100);
+                CheckIsGameOver();
+                ShowQuestion(currentQuestionNumber);
+                ShowOptions(currentQuestionNumber);
+                ShowAnswer(currentQuestionNumber);
+                ShowScoreBoard();
 
             }
             else
             {
                 Debug.Log("回答錯誤");
 
+                ScoreBoard.AnswerWrong(100);
+                CheckIsGameOver();
+                ShowQuestion(currentQuestionNumber);
+                ShowOptions(currentQuestionNumber);
+                ShowAnswer(currentQuestionNumber);
+                ShowScoreBoard();
 
             }
         }
