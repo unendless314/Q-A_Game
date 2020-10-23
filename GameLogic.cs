@@ -21,9 +21,8 @@ public class GameLogic : MonoBehaviour
     public int currentQuestionNumber;   //這個是 question array 的 index 不是真正的題號
 
     public int[] questionIDs;
-    public string[] optionsContents;    //非必要變數，現階段拿掉不影響遊戲進行 2020/10/22
-    public string questionContents; //非必要變數，現階段拿掉不影響遊戲進行 2020/10/22
-    public string answerContents;   //目前會用到，日後可能重構省略
+
+
     public Question[] questions;
 
     public int answerNumber;
@@ -52,7 +51,7 @@ public class GameLogic : MonoBehaviour
         rightAnswerTimesText = GameObject.Find("RightAnswer").GetComponent<Text>();
 
         optionContentsText = new Text[4];   //上限 4 選項，暫時先寫死
-        optionsContents = new string[4];    //上限 4 選項，暫時先寫死
+
         for (int i = 0; i < optionContentsText.Length; i++)
         {
             optionContentsText[i] = GameObject.Find("Option" + (i + 1).ToString()).GetComponent<Text>();
@@ -62,7 +61,6 @@ public class GameLogic : MonoBehaviour
         UpdatePlayStatus();
 
         databaseQuestionNumbers = GameDataManager.Singleton.listQuestion.Count; //這裏要接資料庫
-        currentQuestionNumber = wrongAnswerTimes + rightAnswerTimes;  //目前在第幾題 (index)
 
         SetQuestionIDs(questionNumbers, databaseQuestionNumbers);    //獲取問題編號陣列，questionIDs 陣列初始化結束
         SetQuestions();
@@ -72,46 +70,14 @@ public class GameLogic : MonoBehaviour
          */
 
         ShowQuestion(currentQuestionNumber);
-
         ShowOptions(currentQuestionNumber);
-        ShowAnswer(currentQuestionNumber);
-
-        //   從這裡切開   //
-
-        //CheckAnswer(currentQuestionNumber);
         ShowScoreBoard();
 
-    }
-
-    void Update()
-    {
-        if (gameOver)
-        {
-            ShowScoreBoard();
-        }
-        else
-        {
-            //   確定可以用鍵盤操控法，接下來用按鈕操控法   //
-
-            if (Input.GetKeyDown(KeyCode.Space))
-            {
-                //無用程式碼
-
-                CheckAnswer(currentQuestionNumber);
-            }
-
-            if (Input.GetKeyDown(KeyCode.Return))
-            {
-                whatIsYourChoice = 111;
-                CheckAnswer(currentQuestionNumber);
-            }
-        }
     }
 
     public void CheckIsGameOver()
     {
         UpdatePlayStatus();
-        currentQuestionNumber = wrongAnswerTimes + rightAnswerTimes;
 
         if (lives <= 0 || wrongAnswerTimes >= 3)
         {
@@ -129,6 +95,12 @@ public class GameLogic : MonoBehaviour
         {
             //Debug.Log("遊戲進行中...");
         }
+
+        if (gameOver)
+        {
+            Debug.Log("玩完了，請接下一場");
+            return;
+        }
     }
 
     public void UpdatePlayStatus()
@@ -139,6 +111,7 @@ public class GameLogic : MonoBehaviour
         wrongAnswerTimes = ScoreBoard.GetWrongAnswerTimes();
         rightAnswerTimes = ScoreBoard.GetRightAnswerTimes();
         gameOver = ScoreBoard.IsGameOver();
+        currentQuestionNumber = wrongAnswerTimes + rightAnswerTimes;    //目前在第幾題 (index)
     }
 
     public void SetQuestionIDs(int questionNumbers, int databaseQuestionNumbers)  //預設取幾道題目，總題庫量多少題，這裏要接資料庫
@@ -165,7 +138,7 @@ public class GameLogic : MonoBehaviour
         }
     }
 
-    public void SetQuestions()
+    public void SetQuestions()     //設定題目內容
     {
         for (int i = 0; i < questionIDs.Length; i++)
         {
@@ -177,7 +150,6 @@ public class GameLogic : MonoBehaviour
     {
         if (counter < questionNumbers)
         {
-            questionContents = questions[counter].questionContents;
             questionContentsText.text = "問題" + currentQuestionNumber.ToString() + ": " + questions[counter].questionContents;
         }
     }
@@ -185,25 +157,20 @@ public class GameLogic : MonoBehaviour
     public void ShowOptions(int counter)    //這裡要開啟資料庫連線
     {
 
-        
-
         if (counter < questionNumbers)
         {
-            int optionNumbers = questions[counter].optionContents.Length;
-            questions[counter].optionNumbers = optionNumbers;
-            questions[counter].Initialize(optionNumbers, questions[counter].answerNumber);  ////
+            int howManyOptions = questions[counter].optionContents.Length;
+            questions[counter].Initialize(howManyOptions, questions[counter].answerNumber);  //關鍵在於把正確答案的編號丟進布林陣列
+            questions[counter].Permutation(howManyOptions); //先創布林陣列，才能開始進行亂數排序
 
-            questions[counter].Permutation(optionNumbers);
-
-            for (int i = 0; i < optionNumbers; i++)
+            for (int i = 0; i < howManyOptions; i++)
             {
                 optionContentsText[i].text = AddPrefix(i) + questions[counter].optionContents[i];
-                optionsContents[i] = questions[counter].optionContents[i];
             }
         }
     }
 
-    private string AddPrefix(int i)
+    private string AddPrefix(int i) //選項加開頭字串
     {
         switch (i)
         {
@@ -220,13 +187,6 @@ public class GameLogic : MonoBehaviour
         }
     }
 
-    public void ShowAnswer(int counter)    //這裡要開啟資料庫連線，未必用得到
-    {
-        if (counter < questionNumbers)
-        {
-            answerContents = questions[counter].answerContents;
-        }
-    }
 
     public void MakeYourChoice(int youChooseNumber)
     {
@@ -245,13 +205,12 @@ public class GameLogic : MonoBehaviour
     {
         if (counter < questionNumbers)
         {
-            /*有問題但不知道怎麼改寫*/
-            questions[counter].FindAnswerNumber(4);   //上限 4 選項，暫時先寫死
-            
+
+            questions[counter].FindAnswerNumber(questions[counter].optionOrder.Length);  
             answerNumber = questions[counter].answerNumber;
 
-            Debug.Log("答案是" + answerNumber + ": " + questions[counter].answerContents);
-            Debug.Log("我選的是" + whatIsYourChoice.ToString() + ": " + questions[counter].optionContents[whatIsYourChoice]);
+            //Debug.Log("答案是" + answerNumber + ": " + questions[counter].answerContents);
+            //Debug.Log("我選的是" + whatIsYourChoice.ToString() + ": " + questions[counter].optionContents[whatIsYourChoice]);
 
             if (whatIsYourChoice == answerNumber)
             {
@@ -261,7 +220,6 @@ public class GameLogic : MonoBehaviour
                 CheckIsGameOver();
                 ShowQuestion(currentQuestionNumber);
                 ShowOptions(currentQuestionNumber);
-                ShowAnswer(currentQuestionNumber);
                 ShowScoreBoard();
 
             }
@@ -273,7 +231,6 @@ public class GameLogic : MonoBehaviour
                 CheckIsGameOver();
                 ShowQuestion(currentQuestionNumber);
                 ShowOptions(currentQuestionNumber);
-                ShowAnswer(currentQuestionNumber);
                 ShowScoreBoard();
 
             }
@@ -287,19 +244,19 @@ public class GameLogic : MonoBehaviour
         wrongAnswerTimesText.text = "答錯次數: " + wrongAnswerTimes.ToString();
         rightAnswerTimesText.text = "答對次數: " + rightAnswerTimes.ToString();
 
-        if (currentQuestionNumber == questionNumbers)
+        if (currentQuestionNumber == questionNumbers)   
         {
-            questionNumbersText.text = "目前題號: " + questionNumbers.ToString();
+            questionNumbersText.text = "目前題號: " + questionNumbers.ToString();   //最後一題的時候，文字顯示特別處理
         }
         else
         {
             if (gameOver)
             {
-                questionNumbersText.text = "目前題號: " + currentQuestionNumber.ToString();
+                questionNumbersText.text = "目前題號: " + currentQuestionNumber.ToString(); //遊戲提前結束時，文字顯示特別處理
             }
             else
             {
-                questionNumbersText.text = "目前題號: " + (currentQuestionNumber + 1).ToString();
+                questionNumbersText.text = "目前題號: " + (currentQuestionNumber + 1).ToString();   //文字顯示 = 題號 index +1
             }
         }
     }
