@@ -18,7 +18,7 @@ public class GameLogic : MonoBehaviour
     public bool gameOver;
 
     public int feverCounter; //2020/10/23
-    public int timeLimit;    //2020/10/23
+    public float timeLimit;    //2020/10/23
     public float[] seconds;  //2020/10/23
     public bool[] answerRecords; //2020/10/23
 
@@ -42,8 +42,9 @@ public class GameLogic : MonoBehaviour
     public Text questionNumbersText;
     public Text wrongAnswerTimesText;
     public Text rightAnswerTimesText;
-    public Text countDownTimer;
-    public Toggle toggle1, toggle2, toggle3, toggle4, toggle5;
+    public Text countDownTimerText;
+    public Text feverCounterText;
+    public GameObject[] answerRecordsToggle;
    
     // Start is called before the first frame update
     void Start()
@@ -55,14 +56,29 @@ public class GameLogic : MonoBehaviour
         wrongAnswerTimesText = GameObject.Find("WrongAnswer").GetComponent<Text>();
         rightAnswerTimesText = GameObject.Find("RightAnswer").GetComponent<Text>();
 
-        optionContentsText = new Text[4];   //上限 4 選項，暫時先寫死
+        countDownTimerText = GameObject.Find("CountDownTimer").GetComponent<Text>();
+        feverCounterText = GameObject.Find("FeverCounter").GetComponent<Text>();
+
+
+        ///////// 上限 5 問題 4 選項，暫時先寫死
+
+        answerRecords = new bool[5];
+        answerRecordsToggle = new GameObject[5];
+        optionContentsText = new Text[4];
+
+        for (int i = 0; i < answerRecordsToggle.Length; i++)
+        {
+            answerRecordsToggle[i] = GameObject.Find("Toggle" + (i + 1).ToString());
+        }
 
         for (int i = 0; i < optionContentsText.Length; i++)
         {
             optionContentsText[i] = GameObject.Find("Option" + (i + 1).ToString()).GetComponent<Text>();
         }
 
-        ScoreBoard.Initialize(questionNumbers, lives);   //設定每場遊戲有幾個題目 + 幾條命
+        ///////// 以上寫死日後再修改
+
+        ScoreBoard.Initialize(questionNumbers, lives, timeLimit);   //設定每場遊戲有幾個題目 + 幾條命 + 倒數幾秒
         UpdatePlayStatus();
 
         databaseQuestionNumbers = GameDataManager.Singleton.listQuestion.Count; //這裏要接資料庫
@@ -74,10 +90,20 @@ public class GameLogic : MonoBehaviour
          如果要動態產生選項按鈕的話，程式碼要寫在這裡
          */
 
-        ShowQuestion(currentQuestionNumber);
-        ShowOptions(currentQuestionNumber);
-        ShowScoreBoard();
+        UpdateUI();
+    }
 
+    void Update()
+    {
+        if (currentQuestionNumber < questionNumbers)
+        {
+            ScoreBoard.SetSeconds(currentQuestionNumber, Time.deltaTime);
+            countDownTimerText.text = Mathf.Ceil(timeLimit - ScoreBoard.GetSeconds(currentQuestionNumber)).ToString();
+        }
+        else
+        {
+
+        }
     }
 
     public void CheckIsGameOver()
@@ -117,6 +143,16 @@ public class GameLogic : MonoBehaviour
         rightAnswerTimes = ScoreBoard.GetRightAnswerTimes();
         gameOver = ScoreBoard.IsGameOver();
         currentQuestionNumber = wrongAnswerTimes + rightAnswerTimes;    //目前在第幾題 (index)
+
+        feverCounter = ScoreBoard.GetFeverCounter();
+
+        for (int i = 0; i < questionNumbers; i++)
+        {
+            answerRecords[i] = ScoreBoard.GetAnswerRecords(i);
+        }
+
+        //public int timeLimit;    //2020/10/23
+        //public float[] seconds;  //2020/10/23
     }
 
     public void SetQuestionIDs(int questionNumbers, int databaseQuestionNumbers)  //預設取幾道題目，總題庫量多少題，這裏要接資料庫
@@ -150,18 +186,25 @@ public class GameLogic : MonoBehaviour
             questions[i] = GameDataManager.Singleton.listQuestion[questionIDs[i]];
         }
     }
-    
+
+    public void UpdateUI()
+    {
+        ShowQuestion(currentQuestionNumber);
+        ShowOptions(currentQuestionNumber);
+        ShowToggles(currentQuestionNumber);
+        ShowScoreBoard();
+    }
+
     public void ShowQuestion(int counter)  //這裡要開啟資料庫連線
     {
         if (counter < questionNumbers)
         {
-            questionContentsText.text = "問題" + currentQuestionNumber.ToString() + ": " + questions[counter].questionContents;
+            questionContentsText.text = "問題" + (currentQuestionNumber + 1).ToString() + ": " + questions[counter].questionContents;
         }
     }
 
     public void ShowOptions(int counter)    //這裡要開啟資料庫連線
     {
-
         if (counter < questionNumbers)
         {
             int howManyOptions = questions[counter].optionContents.Length;
@@ -192,6 +235,39 @@ public class GameLogic : MonoBehaviour
         }
     }
 
+    private void ShowToggles(int counter)   //性質不一樣，答 1 題才更新 1 題
+    {
+        for (int i = 0; i < counter; i++)
+        {
+            answerRecordsToggle[i].GetComponent<Toggle>().isOn = answerRecords[i];
+            answerRecordsToggle[i].transform.Find("Background").GetComponent<Image>().color = Color.yellow;    
+        }
+    }
+
+    public void ShowScoreBoard()
+    {
+        scoreText.text = "目前的分數: " + score.ToString();
+        livesText.text = "剩餘生命數: " + lives.ToString();
+        wrongAnswerTimesText.text = "答錯次數: " + wrongAnswerTimes.ToString();
+        rightAnswerTimesText.text = "答對次數: " + rightAnswerTimes.ToString();
+        feverCounterText.text = "連續答對題數: " + feverCounter.ToString();
+
+        if (currentQuestionNumber == questionNumbers)
+        {
+            questionNumbersText.text = "目前題號: " + questionNumbers.ToString();   //最後一題的時候，文字顯示特別處理
+        }
+        else
+        {
+            if (gameOver)
+            {
+                questionNumbersText.text = "目前題號: " + currentQuestionNumber.ToString(); //遊戲提前結束時，文字顯示特別處理
+            }
+            else
+            {
+                questionNumbersText.text = "目前題號: " + (currentQuestionNumber + 1).ToString();   //文字顯示 = 題號 index +1
+            }
+        }
+    }
 
     public void MakeYourChoice(int youChooseNumber)
     {
@@ -210,23 +286,16 @@ public class GameLogic : MonoBehaviour
     {
         if (counter < questionNumbers)
         {
-
             questions[counter].FindAnswerNumber(questions[counter].optionOrder.Length);  
             answerNumber = questions[counter].answerNumber;
-
-            //Debug.Log("答案是" + answerNumber + ": " + questions[counter].answerContents);
-            //Debug.Log("我選的是" + whatIsYourChoice.ToString() + ": " + questions[counter].optionContents[whatIsYourChoice]);
 
             if (whatIsYourChoice == answerNumber)
             {
                 Debug.Log("回答正確");
 
-                ScoreBoard.AnswerRight(100);
+                ScoreBoard.AnswerRight(100, currentQuestionNumber);
                 CheckIsGameOver();
-                ShowQuestion(currentQuestionNumber);
-                ShowOptions(currentQuestionNumber);
-                ShowScoreBoard();
-
+                UpdateUI();
             }
             else
             {
@@ -234,34 +303,7 @@ public class GameLogic : MonoBehaviour
 
                 ScoreBoard.AnswerWrong(100);
                 CheckIsGameOver();
-                ShowQuestion(currentQuestionNumber);
-                ShowOptions(currentQuestionNumber);
-                ShowScoreBoard();
-
-            }
-        }
-    }
-    
-    private void ShowScoreBoard()
-    {
-        scoreText.text = "目前的分數: " + score.ToString();
-        livesText.text = "剩餘生命數: " + lives.ToString();
-        wrongAnswerTimesText.text = "答錯次數: " + wrongAnswerTimes.ToString();
-        rightAnswerTimesText.text = "答對次數: " + rightAnswerTimes.ToString();
-
-        if (currentQuestionNumber == questionNumbers)   
-        {
-            questionNumbersText.text = "目前題號: " + questionNumbers.ToString();   //最後一題的時候，文字顯示特別處理
-        }
-        else
-        {
-            if (gameOver)
-            {
-                questionNumbersText.text = "目前題號: " + currentQuestionNumber.ToString(); //遊戲提前結束時，文字顯示特別處理
-            }
-            else
-            {
-                questionNumbersText.text = "目前題號: " + (currentQuestionNumber + 1).ToString();   //文字顯示 = 題號 index +1
+                UpdateUI();
             }
         }
     }
