@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -11,6 +11,11 @@ public static class ScoreBoard
     private static int rightAnswerTimes;
     private static bool gameOver;
 
+    private static int feverCounter;
+    private static int timeLimit;
+    private static float[] seconds;
+    private static bool[] answerRecords;
+
     public static int TestValue;    // 多餘程式碼，練習時用到，日後待刪除
     
     public static void Initialize(int howManyQuestion, int howManyLives)
@@ -21,6 +26,17 @@ public static class ScoreBoard
         wrongAnswerTimes = 0;
         rightAnswerTimes = 0;
         gameOver = false;
+
+        feverCounter = 0;
+        timeLimit = 15;
+        seconds = new float[howManyQuestion];
+        answerRecords = new bool[howManyQuestion];
+
+        for (int i = 0; i < howManyQuestion; i++)
+        {
+            seconds[i] = 0;
+            answerRecords[i] = false;
+        }
     }
 
     public static void AnswerRight(int plusScore)
@@ -39,6 +55,26 @@ public static class ScoreBoard
     public static void SetGameover()
     {
         gameOver = true;
+    }
+
+    public static void SetFeverCounter()
+    {
+        feverCounter += 1;
+    }
+
+    public static void ResetFeverCounter()
+    {
+        feverCounter = 0;
+    }
+
+    public static void SetSeconds(int currentQuestionNumber, float timeDelataTime)
+    {
+        seconds[currentQuestionNumber] += timeDelataTime;
+    }
+
+    public static void SetAnswerRecords(int currentQuestionNumber)
+    {
+        answerRecords[currentQuestionNumber] = true;
     }
 
     public static int GetScore()
@@ -69,5 +105,32 @@ public static class ScoreBoard
     public static bool IsGameOver()
     {
         return gameOver;
+    }
+
+    public static int GetFeverCounter()
+    {
+        return feverCounter;
+    }
+
+    public static int GetTimeLimit()
+    {
+        return timeLimit;
+    }
+
+    public static float GetTotalSeconds(int currentQuestionNumber)
+    {
+        float totalSeconds = 0;
+
+        for (int i = 0; i < currentQuestionNumber; i++)
+        {
+            totalSeconds += seconds[currentQuestionNumber];
+        }
+
+        return totalSeconds;
+    }
+
+    public static bool GetAnswerRecords(int currentQuestionNumber)
+    {
+        return answerRecords[currentQuestionNumber];
     }
 }
