@@ -7,11 +7,9 @@ public class Question
 {
     public int questionID;
     public string questionContents;
-    public int optionNumbers;
     public string[] optionContents;
     public int answerNumber;
     public string answerContents;
-
     public bool[] optionOrder;
 
     public void Initialize(int howManyOptions, int answerIndex) //初始化，重現原始問題和原始答案
@@ -27,8 +25,6 @@ public class Question
                 optionOrder[i] = true;
             }
         }
-
-        answerContents = optionContents[answerIndex];
     }
 
     public void Permutation(int howManyOptions) //改變答案及選項的順序
@@ -44,11 +40,11 @@ public class Question
         for (int i = 0; i < howManyOptions; i++)
         {
             optionListA.Add(optionContents[i]); //A 集合塞了所有的選項
-
             optionOrderA.Add(optionOrder[i]);   //A 集合塞了所有的布林
         }
 
         // optionListA = optionContents.ToList();  //Linq 函式庫寫法
+        // optionOrderA = optionOrder.ToList();  //Linq 函式庫寫法
 
         while (optionListA.Count > 0)
         {
@@ -68,31 +64,11 @@ public class Question
         }
 
         //  optionContents = optionListB.ToArray(); //Linq 函式庫寫法
+        // optionOrderA = optionOrderB.ToArray();  //Linq 函式庫寫法
     }
-
-
-    /*
-    
-    找答案的功能使用到字串搜尋，多空白鍵就會GG不是好寫法，要改寫
-
-    */
 
     public void FindAnswerNumber(int howManyOptions)
     {
-        /*
-        for (int i = 0; i < howManyOptions; i++)
-        {
-            if (optionContents[i] == answerContents)
-            {
-                answerNumber = i;
-            }
-            else
-            {
-                continue;
-            }
-        }
-        */
-
         for (int i = 0; i < howManyOptions; i++)
         {
             if (optionOrder[i] == true)
@@ -103,7 +79,6 @@ public class Question
             {
                 continue;
             }
-
         }
     }
 }
