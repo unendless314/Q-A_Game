@@ -17,11 +17,14 @@ public class GameLogic : MonoBehaviour
     public int rightAnswerTimes;
     public bool gameOver;
 
+    public int feverCounter; //2020/10/23
+    public int timeLimit;    //2020/10/23
+    public float[] seconds;  //2020/10/23
+    public bool[] answerRecords; //2020/10/23
+
     public int databaseQuestionNumbers; //資料庫的題目總數
     public int currentQuestionNumber;   //這個是 question array 的 index 不是真正的題號
-
     public int[] questionIDs;
-
 
     public Question[] questions;
 
@@ -39,6 +42,8 @@ public class GameLogic : MonoBehaviour
     public Text questionNumbersText;
     public Text wrongAnswerTimesText;
     public Text rightAnswerTimesText;
+    public Text countDownTimer;
+    public Toggle toggle1, toggle2, toggle3, toggle4, toggle5;
    
     // Start is called before the first frame update
     void Start()
