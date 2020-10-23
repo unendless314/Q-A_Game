@@ -72,7 +72,8 @@ public class GameLogic : MonoBehaviour
          */
 
         ShowQuestion(currentQuestionNumber);
-        ShowOptions(currentQuestionNumber); //我的答案好像永遠是最後一個沒有換位置，只有錯誤選項換過?
+
+        ShowOptions(currentQuestionNumber);
         ShowAnswer(currentQuestionNumber);
 
         //   從這裡切開   //
@@ -94,9 +95,8 @@ public class GameLogic : MonoBehaviour
 
             if (Input.GetKeyDown(KeyCode.Space))
             {
-                questions[currentQuestionNumber].FindAnswerNumber(4);   //上限 4 選項，暫時先寫死
-                answerNumber = questions[currentQuestionNumber].answerNumber;
-                whatIsYourChoice = answerNumber;
+                //無用程式碼
+
                 CheckAnswer(currentQuestionNumber);
             }
 
@@ -117,17 +117,17 @@ public class GameLogic : MonoBehaviour
         {
             ScoreBoard.SetGameover();   //計分板設定遊戲狀態為結束
             gameOver = ScoreBoard.IsGameOver();
-            Debug.Log("遊戲結束");
+            //Debug.Log("遊戲結束");
         }
         else if (currentQuestionNumber >= questionNumbers)    //index 的計算要減 1
         {
             ScoreBoard.SetGameover();   //計分板設定遊戲狀態為結束
             gameOver = ScoreBoard.IsGameOver();
-            Debug.Log("遊戲結束");
+            //Debug.Log("遊戲結束");
         }
         else
         {
-            Debug.Log("遊戲進行中...");
+            //Debug.Log("遊戲進行中...");
         }
     }
 
@@ -184,10 +184,15 @@ public class GameLogic : MonoBehaviour
 
     public void ShowOptions(int counter)    //這裡要開啟資料庫連線
     {
+
+        
+
         if (counter < questionNumbers)
         {
             int optionNumbers = questions[counter].optionContents.Length;
             questions[counter].optionNumbers = optionNumbers;
+            questions[counter].Initialize(optionNumbers, questions[counter].answerNumber);  ////
+
             questions[counter].Permutation(optionNumbers);
 
             for (int i = 0; i < optionNumbers; i++)
@@ -225,17 +230,24 @@ public class GameLogic : MonoBehaviour
 
     public void MakeYourChoice(int youChooseNumber)
     {
-        whatIsYourChoice = youChooseNumber;
-
-        CheckAnswer(currentQuestionNumber);
-
+        if (gameOver)
+        {
+            
+        }
+        else
+        {
+            whatIsYourChoice = youChooseNumber;
+            CheckAnswer(currentQuestionNumber);
+        }
     }
 
     public void CheckAnswer(int counter)
     {
         if (counter < questionNumbers)
         {
+            /*有問題但不知道怎麼改寫*/
             questions[counter].FindAnswerNumber(4);   //上限 4 選項，暫時先寫死
+            
             answerNumber = questions[counter].answerNumber;
 
             Debug.Log("答案是" + answerNumber + ": " + questions[counter].answerContents);
