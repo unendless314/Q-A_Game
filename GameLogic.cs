@@ -29,7 +29,7 @@ public class GameLogic : MonoBehaviour
     public Question[] questions;
 
     public int answerNumber;
-    public int whatIsYourChoice;
+    public int[] whatIsYourChoice;
 
     /// <summary>
     /// View + UI
@@ -64,6 +64,7 @@ public class GameLogic : MonoBehaviour
 
         answerRecords = new bool[5];
         answerRecordsToggle = new GameObject[5];
+        whatIsYourChoice = new int[5];
         optionContentsText = new Text[4];
 
         for (int i = 0; i < answerRecordsToggle.Length; i++)
@@ -100,10 +101,6 @@ public class GameLogic : MonoBehaviour
             ScoreBoard.SetSeconds(currentQuestionNumber, Time.deltaTime);
             countDownTimerText.text = Mathf.Ceil(timeLimit - ScoreBoard.GetSeconds(currentQuestionNumber)).ToString();
         }
-        else
-        {
-
-        }
     }
 
     public void CheckIsGameOver()
@@ -130,6 +127,9 @@ public class GameLogic : MonoBehaviour
         if (gameOver)
         {
             Debug.Log("玩完了，請接下一場");
+
+            //////// 要顯示出結算頁面
+
             return;
         }
     }
@@ -277,7 +277,7 @@ public class GameLogic : MonoBehaviour
         }
         else
         {
-            whatIsYourChoice = youChooseNumber;
+            whatIsYourChoice[currentQuestionNumber] = youChooseNumber;
             CheckAnswer(currentQuestionNumber);
         }
     }
@@ -289,7 +289,7 @@ public class GameLogic : MonoBehaviour
             questions[counter].FindAnswerNumber(questions[counter].optionOrder.Length);  
             answerNumber = questions[counter].answerNumber;
 
-            if (whatIsYourChoice == answerNumber)
+            if (whatIsYourChoice[currentQuestionNumber] == answerNumber)
             {
                 Debug.Log("回答正確");
 
