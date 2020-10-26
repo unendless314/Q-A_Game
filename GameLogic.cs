@@ -19,6 +19,7 @@ public class GameLogic : MonoBehaviour
 
     public int feverCounter; //2020/10/23
     public float timeLimit;    //2020/10/23
+    private float timeRemaing;
     public float[] seconds;  //2020/10/23
     public bool[] answerRecords; //2020/10/23
 
@@ -45,6 +46,8 @@ public class GameLogic : MonoBehaviour
     public Text countDownTimerText;
     public Text feverCounterText;
     public GameObject[] answerRecordsToggle;
+
+    public GameObject GameResult;
    
     // Start is called before the first frame update
     void Start()
@@ -77,7 +80,7 @@ public class GameLogic : MonoBehaviour
             optionContentsText[i] = GameObject.Find("Option" + (i + 1).ToString()).GetComponent<Text>();
         }
 
-        ///////// 以上寫死日後再修改
+        ///////// 以上先寫死，日後再修改優化
 
         ScoreBoard.Initialize(questionNumbers, lives, timeLimit);   //設定每場遊戲有幾個題目 + 幾條命 + 倒數幾秒
         UpdatePlayStatus();
@@ -92,14 +95,30 @@ public class GameLogic : MonoBehaviour
          */
 
         UpdateUI();
+
+        GameResult.SetActive(false);    //隨便寫 2020/10/26
     }
 
     void Update()
     {
-        if (currentQuestionNumber < questionNumbers)
+        if (gameOver)
         {
-            ScoreBoard.SetSeconds(currentQuestionNumber, Time.deltaTime);
-            countDownTimerText.text = Mathf.Ceil(timeLimit - ScoreBoard.GetSeconds(currentQuestionNumber)).ToString();
+
+        }
+        else
+        {
+            if (currentQuestionNumber < questionNumbers)
+            {
+                ScoreBoard.SetSeconds(currentQuestionNumber, Time.deltaTime);
+                timeRemaing = Mathf.Ceil(timeLimit - ScoreBoard.GetSeconds(currentQuestionNumber));
+
+                if (timeRemaing <= 0)
+                {
+                    MakeYourChoice(100);
+                }
+
+                countDownTimerText.text = timeRemaing.ToString();
+            }
         }
     }
 
@@ -113,7 +132,7 @@ public class GameLogic : MonoBehaviour
             gameOver = ScoreBoard.IsGameOver();
             //Debug.Log("遊戲結束");
         }
-        else if (currentQuestionNumber >= questionNumbers)    //index 的計算要減 1
+        else if (currentQuestionNumber >= questionNumbers)    //index 的計算要減 1，所以相等的時候其實表示目前題號已經超過題數上限
         {
             ScoreBoard.SetGameover();   //計分板設定遊戲狀態為結束
             gameOver = ScoreBoard.IsGameOver();
@@ -128,7 +147,8 @@ public class GameLogic : MonoBehaviour
         {
             Debug.Log("玩完了，請接下一場");
 
-            //////// 要顯示出結算頁面
+            GameResult.SetActive(true);
+            //////// 要顯示出結算頁面，隨便寫 2020/10/26
 
             return;
         }
