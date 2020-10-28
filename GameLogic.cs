@@ -19,6 +19,9 @@ public class GameLogic : MonoBehaviour
 
     public int feverCounter;
     public float timeLimit;
+    public float displayTime;
+    private IEnumerator coroutine;
+
     private float timeRemaing;
     public float[] seconds_Array; 
     public bool[] answerRecords_Array;
@@ -55,6 +58,7 @@ public class GameLogic : MonoBehaviour
     public Text rightAnswerTimesText;
     public Text countDownTimerText;
     public Text feverCounterText;
+    public Image[] optionBackgroundsImages_Array;
     public GameObject[] answerRecordsToggles_Array;
 
     public GameObject GameResult;
@@ -132,6 +136,11 @@ public class GameLogic : MonoBehaviour
         {
             optionContentsText_Array[i] = GameObject.Find("Option" + (i + 1).ToString()).GetComponent<Text>();
         }
+
+        for (int i = 0; i < optionContentsText_Array.Length; i++)
+        {
+            optionBackgroundsImages_Array[i] = GameObject.Find("OptionBG" + (i + 1).ToString()).GetComponent<Image>();
+        }
     }
 
     public void CheckIsGameOver()
@@ -159,7 +168,7 @@ public class GameLogic : MonoBehaviour
         {
             Debug.Log("玩完了，請接下一場");
 
-            GameResult.SetActive(true);
+            //GameResult.SetActive(true);
             //////// 要顯示出結算頁面，隨便寫 2020/10/26
 
             return;
@@ -175,7 +184,7 @@ public class GameLogic : MonoBehaviour
         rightAnswerTimes = ScoreBoard.GetRightAnswerTimes();
         gameOver = ScoreBoard.IsGameOver();
 
-        SetNextQuestionNumber(gameOver);    //無效程式碼
+        currentQuestionNumber = wrongAnswerTimes + rightAnswerTimes;
 
         feverCounter = ScoreBoard.GetFeverCounter();
 
@@ -185,19 +194,7 @@ public class GameLogic : MonoBehaviour
         }
     }
 
-    private void SetNextQuestionNumber(bool theGameIsOver)
-    {
-        if (theGameIsOver)
-        {
-            
-        }
-        else
-        {
-            currentQuestionNumber = wrongAnswerTimes + rightAnswerTimes;    //目前在第幾題 (index)
-        }
-    }
-
-    //會需要取題目範圍
+    //會需要取題目範圍 2020/10/27
 
     public void SetQuestionIDs(int questionNumbers, int databaseQuestionNumbers)  //預設取幾道題目，總題庫量多少題，這裏要接資料庫
     {
@@ -244,15 +241,24 @@ public class GameLogic : MonoBehaviour
         {
             ShowToggles(currentQuestionNumber);
             ShowScoreBoard();
+
+            //ShowCorrectAnswer(currentQuestionNumber);
+
+            GameResult.SetActive(true);
         }
         else
         {
-            ShowQuestion(currentQuestionNumber);
-            ShowOptions(currentQuestionNumber);
             ShowToggles(currentQuestionNumber);
             ShowScoreBoard();
+
+            //ShowCorrectAnswer(currentQuestionNumber);
+
+            ShowQuestion(currentQuestionNumber);
+            ShowOptions(currentQuestionNumber);
         }
     }
+
+   
 
     public void ShowQuestion(int counter)
     {
@@ -316,6 +322,26 @@ public class GameLogic : MonoBehaviour
             }
         }
     }
+
+    private void ShowCorrectAnswer(int counter)
+    {
+        /*
+        if (counter <= 0)
+        {
+            return;
+        }
+        */
+
+        coroutine = WaitForDisplay(displayTime);
+        StartCoroutine(coroutine);
+    }
+
+    IEnumerator WaitForDisplay(float waitTime)
+    {
+
+        yield return new WaitForSeconds(waitTime);
+    }
+
 
     public void MakeYourChoice(int youChooseNumber)
     {
