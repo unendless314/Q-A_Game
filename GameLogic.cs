@@ -17,27 +17,37 @@ public class GameLogic : MonoBehaviour
     public int rightAnswerTimes;
     public bool gameOver;
 
-    public int feverCounter; //2020/10/23
-    public float timeLimit;    //2020/10/23
+    public int feverCounter;
+    public float timeLimit;
     private float timeRemaing;
-    public float[] seconds;  //2020/10/23
-    public bool[] answerRecords; //2020/10/23
+    public float[] seconds_Array; 
+    public bool[] answerRecords_Array;
+    public int[] choiceNumbers_Array;
+    public int[] answerNumbers_Array;
 
     public int databaseQuestionNumbers; //資料庫的題目總數
     public int currentQuestionNumber;   //這個是 question array 的 index 不是真正的題號
-    public int[] questionIDs;
+    public int[] questionIDs_Array;
 
-    public Question[] questions;
-
-    public int answerNumber;
-    public int[] whatIsYourChoice;
+    public Question[] questions_Array;
 
     /// <summary>
     /// View + UI
     /// </summary>
 
+    #region 檢查
+
+
+    #endregion 檢查
+
+#if UNITY_ANDROID
+
+#else
+
+#endif
+
     public Text questionContentsText;
-    public Text[] optionContentsText;
+    public Text[] optionContentsText_Array;
     public Text scoreText;
     public Text livesText;
     public Text questionNumbersText;
@@ -45,48 +55,27 @@ public class GameLogic : MonoBehaviour
     public Text rightAnswerTimesText;
     public Text countDownTimerText;
     public Text feverCounterText;
-    public GameObject[] answerRecordsToggle;
+    public GameObject[] answerRecordsToggles_Array;
 
     public GameObject GameResult;
    
     // Start is called before the first frame update
     void Start()
     {
-        questionContentsText = GameObject.Find("Question").GetComponent<Text>();
-        scoreText = GameObject.Find("Score").GetComponent<Text>();
-        livesText = GameObject.Find("Lives").GetComponent<Text>();
-        questionNumbersText = GameObject.Find("QuestionNumber").GetComponent<Text>();
-        wrongAnswerTimesText = GameObject.Find("WrongAnswer").GetComponent<Text>();
-        rightAnswerTimesText = GameObject.Find("RightAnswer").GetComponent<Text>();
-
-        countDownTimerText = GameObject.Find("CountDownTimer").GetComponent<Text>();
-        feverCounterText = GameObject.Find("FeverCounter").GetComponent<Text>();
-
-
         ///////// 上限 5 問題 4 選項，暫時先寫死
-
-        answerRecords = new bool[5];
-        answerRecordsToggle = new GameObject[5];
-        whatIsYourChoice = new int[5];
-        optionContentsText = new Text[4];
-
-        for (int i = 0; i < answerRecordsToggle.Length; i++)
-        {
-            answerRecordsToggle[i] = GameObject.Find("Toggle" + (i + 1).ToString());
-        }
-
-        for (int i = 0; i < optionContentsText.Length; i++)
-        {
-            optionContentsText[i] = GameObject.Find("Option" + (i + 1).ToString()).GetComponent<Text>();
-        }
-
+        answerRecords_Array = new bool[5];
+        answerRecordsToggles_Array = new GameObject[5];
+        answerNumbers_Array = new int[5];
+        choiceNumbers_Array = new int[5];
+        optionContentsText_Array = new Text[4];
         ///////// 以上先寫死，日後再修改優化
 
+        GetUIComponents();
+
         ScoreBoard.Initialize(questionNumbers, lives, timeLimit);   //設定每場遊戲有幾個題目 + 幾條命 + 倒數幾秒
+
         UpdatePlayStatus();
-
         databaseQuestionNumbers = GameDataManager.Singleton.listQuestion.Count; //這裏要接資料庫
-
         SetQuestionIDs(questionNumbers, databaseQuestionNumbers);    //獲取問題編號陣列，questionIDs 陣列初始化結束
         SetQuestions();
 
@@ -95,8 +84,7 @@ public class GameLogic : MonoBehaviour
          */
 
         UpdateUI();
-
-        GameResult.SetActive(false);    //隨便寫 2020/10/26
+        //GameResult.SetActive(false);    //隨便寫 2020/10/26
     }
 
     void Update()
@@ -119,6 +107,29 @@ public class GameLogic : MonoBehaviour
 
                 countDownTimerText.text = timeRemaing.ToString();
             }
+        }
+    }
+
+    private void GetUIComponents()
+    {
+        //既然是 public 的話，為什麼不用拉的就好呢?
+        questionContentsText = GameObject.Find("Question").GetComponent<Text>();
+        scoreText = GameObject.Find("Score").GetComponent<Text>();
+        livesText = GameObject.Find("Lives").GetComponent<Text>();
+        questionNumbersText = GameObject.Find("QuestionNumber").GetComponent<Text>();
+        wrongAnswerTimesText = GameObject.Find("WrongAnswer").GetComponent<Text>();
+        rightAnswerTimesText = GameObject.Find("RightAnswer").GetComponent<Text>();
+        countDownTimerText = GameObject.Find("CountDownTimer").GetComponent<Text>();
+        feverCounterText = GameObject.Find("FeverCounter").GetComponent<Text>();
+
+        for (int i = 0; i < answerRecordsToggles_Array.Length; i++)
+        {
+            answerRecordsToggles_Array[i] = GameObject.Find("Toggle" + (i + 1).ToString());
+        }
+
+        for (int i = 0; i < optionContentsText_Array.Length; i++)
+        {
+            optionContentsText_Array[i] = GameObject.Find("Option" + (i + 1).ToString()).GetComponent<Text>();
         }
     }
 
@@ -162,23 +173,42 @@ public class GameLogic : MonoBehaviour
         wrongAnswerTimes = ScoreBoard.GetWrongAnswerTimes();
         rightAnswerTimes = ScoreBoard.GetRightAnswerTimes();
         gameOver = ScoreBoard.IsGameOver();
-        currentQuestionNumber = wrongAnswerTimes + rightAnswerTimes;    //目前在第幾題 (index)
+
+        SetNextQuestionNumber(gameOver);    //無效程式碼
 
         feverCounter = ScoreBoard.GetFeverCounter();
 
         for (int i = 0; i < questionNumbers; i++)
         {
-            answerRecords[i] = ScoreBoard.GetAnswerRecords(i);
+            answerRecords_Array[i] = ScoreBoard.GetAnswerRecords(i);
         }
-
-        //public int timeLimit;    //2020/10/23
-        //public float[] seconds;  //2020/10/23
     }
+
+    private void SetNextQuestionNumber(bool theGameIsOver)
+    {
+        if (theGameIsOver)
+        {
+            
+        }
+        else
+        {
+            currentQuestionNumber = wrongAnswerTimes + rightAnswerTimes;    //目前在第幾題 (index)
+        }
+    }
+
+    //會需要取題目範圍
 
     public void SetQuestionIDs(int questionNumbers, int databaseQuestionNumbers)  //預設取幾道題目，總題庫量多少題，這裏要接資料庫
     {
-        questionIDs = new int[questionNumbers];
-        questions = new Question[questionNumbers];
+
+        if(questionNumbers > databaseQuestionNumbers)   //笨笨的防呆?
+        {
+            Debug.Log("出題數量大於資料表題目筆數");
+            return;
+        }
+
+        questionIDs_Array = new int[questionNumbers];
+        questions_Array = new Question[questionNumbers];
 
         for (int i = 0; i < questionNumbers; i++)
         {
@@ -187,54 +217,56 @@ public class GameLogic : MonoBehaviour
 
             for (int j = 0; j < i; j++)
             {
-                while (questionIDs[j] == randomQuestionID)
+                while (questionIDs_Array[j] == randomQuestionID)  //題數必須要大於題庫數量，否則 while 迴圈解不了 2020/10/27
                 {
                     randomQuestionID = (int)UnityEngine.Random.Range(1, databaseQuestionNumbers);
                     j = 0;
                 }
             }
 
-        questionIDs[i] = randomQuestionID;
+            questionIDs_Array[i] = randomQuestionID;
 
         }
     }
 
     public void SetQuestions()     //設定題目內容
     {
-        for (int i = 0; i < questionIDs.Length; i++)
+        for (int i = 0; i < questionIDs_Array.Length; i++)
         {
-            questions[i] = GameDataManager.Singleton.listQuestion[questionIDs[i]];
+            questions_Array[i] = GameDataManager.Singleton.listQuestion[questionIDs_Array[i]];
         }
     }
 
     public void UpdateUI()
     {
-        ShowQuestion(currentQuestionNumber);
-        ShowOptions(currentQuestionNumber);
-        ShowToggles(currentQuestionNumber);
-        ShowScoreBoard();
-    }
-
-    public void ShowQuestion(int counter)  //這裡要開啟資料庫連線
-    {
-        if (counter < questionNumbers)
+        if (gameOver)   //是否還有下一題，沒有的話只顯示答題紀錄，有的話會顯示問題及選項
         {
-            questionContentsText.text = "問題" + (currentQuestionNumber + 1).ToString() + ": " + questions[counter].questionContents;
+            ShowToggles(currentQuestionNumber);
+            ShowScoreBoard();
+        }
+        else
+        {
+            ShowQuestion(currentQuestionNumber);
+            ShowOptions(currentQuestionNumber);
+            ShowToggles(currentQuestionNumber);
+            ShowScoreBoard();
         }
     }
 
-    public void ShowOptions(int counter)    //這裡要開啟資料庫連線
+    public void ShowQuestion(int counter)
     {
-        if (counter < questionNumbers)
-        {
-            int howManyOptions = questions[counter].optionContents.Length;
-            questions[counter].Initialize(howManyOptions, questions[counter].answerNumber);  //關鍵在於把正確答案的編號丟進布林陣列
-            questions[counter].Permutation(howManyOptions); //先創布林陣列，才能開始進行亂數排序
+        questionContentsText.text = "問題" + (currentQuestionNumber + 1).ToString() + ": " + questions_Array[counter].questionContents;
+    }
 
-            for (int i = 0; i < howManyOptions; i++)
-            {
-                optionContentsText[i].text = AddPrefix(i) + questions[counter].optionContents[i];
-            }
+    public void ShowOptions(int counter)
+    {
+        int howManyOptions = questions_Array[counter].optionContents.Length;
+        questions_Array[counter].Initialize(howManyOptions);  //關鍵在於把正確答案的編號丟進布林陣列
+        questions_Array[counter].Permutation(howManyOptions); //先創布林陣列，才能開始進行亂數排序
+
+        for (int i = 0; i < howManyOptions; i++)
+        {
+            optionContentsText_Array[i].text = AddPrefix(i) + questions_Array[counter].optionContents[i];
         }
     }
 
@@ -255,12 +287,12 @@ public class GameLogic : MonoBehaviour
         }
     }
 
-    private void ShowToggles(int counter)   //性質不一樣，答 1 題才更新 1 題
+    private void ShowToggles(int counter)   //性質不一樣，答 1 題才更新 1 題    測試直接用 toggle 而不是 gameobject
     {
         for (int i = 0; i < counter; i++)
         {
-            answerRecordsToggle[i].GetComponent<Toggle>().isOn = answerRecords[i];
-            answerRecordsToggle[i].transform.Find("Background").GetComponent<Image>().color = Color.yellow;    
+            answerRecordsToggles_Array[i].GetComponent<Toggle>().isOn = answerRecords_Array[i];
+            answerRecordsToggles_Array[i].transform.Find("Background").GetComponent<Image>().color = Color.yellow;    
         }
     }
 
@@ -272,15 +304,10 @@ public class GameLogic : MonoBehaviour
         rightAnswerTimesText.text = "答對次數: " + rightAnswerTimes.ToString();
         feverCounterText.text = "連續答對題數: " + feverCounter.ToString();
 
-        if (currentQuestionNumber == questionNumbers)
-        {
-            questionNumbersText.text = "目前題號: " + questionNumbers.ToString();   //最後一題的時候，文字顯示特別處理
-        }
-        else
         {
             if (gameOver)
             {
-                questionNumbersText.text = "目前題號: " + currentQuestionNumber.ToString(); //遊戲提前結束時，文字顯示特別處理
+                questionNumbersText.text = "目前題號: " + currentQuestionNumber.ToString(); //遊戲結束時，文字顯示另外處理
             }
             else
             {
@@ -297,34 +324,32 @@ public class GameLogic : MonoBehaviour
         }
         else
         {
-            whatIsYourChoice[currentQuestionNumber] = youChooseNumber;
+            choiceNumbers_Array[currentQuestionNumber] = youChooseNumber;
+            ScoreBoard.SetChoiceNumbers(currentQuestionNumber, youChooseNumber);
             CheckAnswer(currentQuestionNumber);
         }
     }
 
     public void CheckAnswer(int counter)
     {
-        if (counter < questionNumbers)
+        questions_Array[counter].FindAnswerNumber(questions_Array[counter].optionOrder.Length);
+        answerNumbers_Array[counter] = questions_Array[counter].answerNumber;
+
+        if (choiceNumbers_Array[currentQuestionNumber] == answerNumbers_Array[counter])
         {
-            questions[counter].FindAnswerNumber(questions[counter].optionOrder.Length);  
-            answerNumber = questions[counter].answerNumber;
+            Debug.Log("回答正確");
 
-            if (whatIsYourChoice[currentQuestionNumber] == answerNumber)
-            {
-                Debug.Log("回答正確");
+            ScoreBoard.AnswerRight(100, currentQuestionNumber);
+            CheckIsGameOver();
+            UpdateUI();
+        }
+        else
+        {
+            Debug.Log("回答錯誤");
 
-                ScoreBoard.AnswerRight(100, currentQuestionNumber);
-                CheckIsGameOver();
-                UpdateUI();
-            }
-            else
-            {
-                Debug.Log("回答錯誤");
-
-                ScoreBoard.AnswerWrong(100);
-                CheckIsGameOver();
-                UpdateUI();
-            }
+            ScoreBoard.AnswerWrong(100);
+            CheckIsGameOver();
+            UpdateUI();
         }
     }
 }
