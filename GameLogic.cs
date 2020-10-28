@@ -66,8 +66,9 @@ public class GameLogic : MonoBehaviour
         answerRecords_Array = new bool[5];
         answerRecordsToggles_Array = new GameObject[5];
         answerNumbers_Array = new int[5];
-        choiceNumbers_Array = new int[5];
+        choiceNumbers_Array = new int[] { 100, 100, 100, 100, 100 }; //new int[5]; 沒有回答的問題，都會變成選 100
         optionContentsText_Array = new Text[4];
+        seconds_Array = new float[5];
         ///////// 以上先寫死，日後再修改優化
 
         GetUIComponents();
@@ -324,6 +325,7 @@ public class GameLogic : MonoBehaviour
         }
         else
         {
+            seconds_Array[currentQuestionNumber] = ScoreBoard.GetSeconds(currentQuestionNumber);
             choiceNumbers_Array[currentQuestionNumber] = youChooseNumber;
             ScoreBoard.SetChoiceNumbers(currentQuestionNumber, youChooseNumber);
             CheckAnswer(currentQuestionNumber);
