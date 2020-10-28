@@ -23,8 +23,8 @@ public class GameResult : MonoBehaviour
 
 
     public float timeLimit = ScoreBoard.GetTimeLimit();
-    public float[] seconds;
-    public bool[] answerRecords;
+    public float[] seconds_Array;
+    public bool[] answerRecords_Array;
 
     void Start()
     {
@@ -36,13 +36,13 @@ public class GameResult : MonoBehaviour
         rightAnswerTimes = ScoreBoard.GetRightAnswerTimes();
         timeLimit = ScoreBoard.GetTimeLimit();
 
-        seconds = new float[questionNumbers];
-        answerRecords = new bool[questionNumbers];
+        seconds_Array = new float[questionNumbers];
+        answerRecords_Array = new bool[questionNumbers];
 
         for (int i = 0; i < questionNumbers; i++)
         {
-            seconds[i] = ScoreBoard.GetSeconds(i);
-            answerRecords[i] = ScoreBoard.GetAnswerRecords(i);
+            seconds_Array[i] = ScoreBoard.GetSeconds(i);
+            answerRecords_Array[i] = ScoreBoard.GetAnswerRecords(i);
         }
 
         successOrFailText = GameObject.Find("SuccessOrFail").GetComponent<Text>();
