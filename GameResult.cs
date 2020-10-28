@@ -77,26 +77,9 @@ public class GameResult : MonoBehaviour
             objectToDisable.SetActive(false);
         }
 
-        /*
         if (enable)
         {
             objectToEnable.SetActive(true);
         }
-        */
-
-    }
-
-    void Update()
-    {
-        /*
-        if (disabled)
-        {
-            objectToDisable.SetActive(false);
-        }
-        else
-        {
-            objectToDisable.SetActive(true);
-        }
-        */
     }
 }
