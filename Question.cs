@@ -12,7 +12,7 @@ public class Question
     public string answerContents;
     public bool[] optionOrder;
 
-    public void Initialize(int howManyOptions, int answerIndex) //初始化，重現原始問題和原始答案
+    public void Initialize(int howManyOptions) //初始化，重現原始問題和原始答案
     {
         optionOrder = new bool[howManyOptions];
 
@@ -20,7 +20,7 @@ public class Question
         {
             optionOrder[i] = false;
 
-            if (i == answerIndex)
+            if (i == answerNumber)
             {
                 optionOrder[i] = true;
             }
