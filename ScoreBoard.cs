@@ -2,6 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/*
+
+明天從計分板開始，要顯示每一次的答題都選擇第幾項答案
+ 
+ */
+
 public static class ScoreBoard
 {
     private static int score;
@@ -13,8 +19,9 @@ public static class ScoreBoard
 
     private static int feverCounter;
     private static float timeLimit;
-    private static float[] seconds;
-    private static bool[] answerRecords;
+    private static float[] seconds_Array;
+    private static bool[] answerRecords_Array;
+    private static int[] choiceNumbers_Array; //可以和 answerRecords 合併節省變數數量，但邏輯難度增加且可讀性會降低
 
     public static int TestValue;    // 多餘程式碼，練習時用到，日後待刪除
     
@@ -29,13 +36,15 @@ public static class ScoreBoard
 
         feverCounter = 0;
         timeLimit = countDownSeconds;
-        seconds = new float[howManyQuestion];
-        answerRecords = new bool[howManyQuestion];
+        seconds_Array = new float[howManyQuestion];
+        answerRecords_Array = new bool[howManyQuestion];
+        choiceNumbers_Array = new int[howManyQuestion];
 
         for (int i = 0; i < howManyQuestion; i++)
         {
-            seconds[i] = 0;
-            answerRecords[i] = false;
+            seconds_Array[i] = 0;
+            answerRecords_Array[i] = false;
+            choiceNumbers_Array[i] = 100;
         }
     }
 
@@ -75,12 +84,17 @@ public static class ScoreBoard
 
     public static void SetSeconds(int currentQuestionNumber, float timeDelataTime)
     {
-        seconds[currentQuestionNumber] += timeDelataTime;
+        seconds_Array[currentQuestionNumber] += timeDelataTime;
     }
 
     public static void SetAnswerRecords(int currentQuestionNumber)
     {
-        answerRecords[currentQuestionNumber] = true;
+        answerRecords_Array[currentQuestionNumber] = true;
+    }
+
+    public static void SetChoiceNumbers(int currentQuestionNumber, int youChooseNumber)
+    {
+        choiceNumbers_Array[currentQuestionNumber] = youChooseNumber;
     }
 
     public static int GetScore()
@@ -125,11 +139,16 @@ public static class ScoreBoard
 
     public static float GetSeconds(int currentQuestionNumber)
     {
-        return seconds[currentQuestionNumber];
+        return seconds_Array[currentQuestionNumber];
     }
 
     public static bool GetAnswerRecords(int currentQuestionNumber)
     {
-        return answerRecords[currentQuestionNumber];
+        return answerRecords_Array[currentQuestionNumber];
+    }
+
+    public static int GetChoiceNumbers(int currentQuestionNumber)
+    {
+        return choiceNumbers_Array[currentQuestionNumber];
     }
 }
