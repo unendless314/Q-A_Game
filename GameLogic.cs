@@ -20,7 +20,7 @@ public class GameLogic : MonoBehaviour
     public int feverCounter;
     public float timeLimit;
     private float timeRemaing;
-    public float[] seconds_Array; 
+    public float[] seconds_Array;
     public bool[] answerRecords_Array;
     public int[] choiceNumbers_Array;
     public int[] answerNumbers_Array;
@@ -34,11 +34,6 @@ public class GameLogic : MonoBehaviour
     /// <summary>
     /// View + UI
     /// </summary>
-
-    #region 檢查
-
-
-    #endregion 檢查
 
 #if UNITY_ANDROID
 
@@ -55,10 +50,11 @@ public class GameLogic : MonoBehaviour
     public Text rightAnswerTimesText;
     public Text countDownTimerText;
     public Text feverCounterText;
+    public Image[] optionBGImages_Array;
     public GameObject[] answerRecordsToggles_Array;
 
     public GameObject GameResult;
-   
+
     // Start is called before the first frame update
     void Start()
     {
@@ -68,6 +64,7 @@ public class GameLogic : MonoBehaviour
         answerNumbers_Array = new int[5];
         choiceNumbers_Array = new int[] { 100, 100, 100, 100, 100 }; //new int[5]; 沒有回答的問題，都會變成選 100
         optionContentsText_Array = new Text[4];
+        optionBGImages_Array = new Image[4];
         seconds_Array = new float[5];
         ///////// 以上先寫死，日後再修改優化
 
@@ -85,7 +82,6 @@ public class GameLogic : MonoBehaviour
          */
 
         UpdateUI();
-        //GameResult.SetActive(false);    //隨便寫 2020/10/26
     }
 
     void Update()
@@ -111,6 +107,7 @@ public class GameLogic : MonoBehaviour
         }
     }
 
+    #region 取得UI元件
     private void GetUIComponents()
     {
         //既然是 public 的話，為什麼不用拉的就好呢?
@@ -131,9 +128,12 @@ public class GameLogic : MonoBehaviour
         for (int i = 0; i < optionContentsText_Array.Length; i++)
         {
             optionContentsText_Array[i] = GameObject.Find("Option" + (i + 1).ToString()).GetComponent<Text>();
+            optionBGImages_Array[i] = GameObject.Find("OptionBG" + (i + 1).ToString()).GetComponent<Image>();
         }
     }
+    #endregion 取得UI元件
 
+    #region 檢查遊戲是否已經結束
     public void CheckIsGameOver()
     {
         UpdatePlayStatus();
@@ -142,30 +142,25 @@ public class GameLogic : MonoBehaviour
         {
             ScoreBoard.SetGameover();   //計分板設定遊戲狀態為結束
             gameOver = ScoreBoard.IsGameOver();
-            //Debug.Log("遊戲結束");
         }
         else if (currentQuestionNumber >= questionNumbers)    //index 的計算要減 1，所以相等的時候其實表示目前題號已經超過題數上限
         {
             ScoreBoard.SetGameover();   //計分板設定遊戲狀態為結束
             gameOver = ScoreBoard.IsGameOver();
-            //Debug.Log("遊戲結束");
         }
         else
         {
-            //Debug.Log("遊戲進行中...");
         }
 
         if (gameOver)
         {
             Debug.Log("玩完了，請接下一場");
-
-            GameResult.SetActive(true);
-            //////// 要顯示出結算頁面，隨便寫 2020/10/26
-
             return;
         }
     }
+    #endregion 檢查遊戲是否已經結束
 
+    #region 更新計分板
     public void UpdatePlayStatus()
     {
         score = ScoreBoard.GetScore();
@@ -175,7 +170,7 @@ public class GameLogic : MonoBehaviour
         rightAnswerTimes = ScoreBoard.GetRightAnswerTimes();
         gameOver = ScoreBoard.IsGameOver();
 
-        SetNextQuestionNumber(gameOver);    //無效程式碼
+        currentQuestionNumber = wrongAnswerTimes + rightAnswerTimes;    //目前在第幾題 (index)
 
         feverCounter = ScoreBoard.GetFeverCounter();
 
@@ -184,25 +179,14 @@ public class GameLogic : MonoBehaviour
             answerRecords_Array[i] = ScoreBoard.GetAnswerRecords(i);
         }
     }
+    #endregion 更新計分板
 
-    private void SetNextQuestionNumber(bool theGameIsOver)
-    {
-        if (theGameIsOver)
-        {
-            
-        }
-        else
-        {
-            currentQuestionNumber = wrongAnswerTimes + rightAnswerTimes;    //目前在第幾題 (index)
-        }
-    }
 
-    //會需要取題目範圍
-
+    #region 設定問題
     public void SetQuestionIDs(int questionNumbers, int databaseQuestionNumbers)  //預設取幾道題目，總題庫量多少題，這裏要接資料庫
     {
-
-        if(questionNumbers > databaseQuestionNumbers)   //笨笨的防呆?
+        //會需要取題目編號範圍
+        if (questionNumbers > databaseQuestionNumbers)   //笨笨的防呆?
         {
             Debug.Log("出題數量大於資料表題目筆數");
             return;
@@ -237,6 +221,7 @@ public class GameLogic : MonoBehaviour
             questions_Array[i] = GameDataManager.Singleton.listQuestion[questionIDs_Array[i]];
         }
     }
+    #endregion 設定問題
 
     public void UpdateUI()
     {
@@ -244,13 +229,49 @@ public class GameLogic : MonoBehaviour
         {
             ShowToggles(currentQuestionNumber);
             ShowScoreBoard();
+
+
+            GameResult.SetActive(true);
         }
         else
         {
-            ShowQuestion(currentQuestionNumber);
-            ShowOptions(currentQuestionNumber);
+
             ShowToggles(currentQuestionNumber);
             ShowScoreBoard();
+
+
+
+            ShowQuestion(currentQuestionNumber);
+            ShowOptions(currentQuestionNumber);
+        }
+    }
+
+    private void ShowToggles(int counter)   //性質不一樣，答 1 題才更新 1 題    測試直接用 toggle 而不是 gameobject
+    {
+        for (int i = 0; i < counter; i++)
+        {
+            answerRecordsToggles_Array[i].GetComponent<Toggle>().isOn = answerRecords_Array[i];
+            answerRecordsToggles_Array[i].transform.Find("Background").GetComponent<Image>().color = Color.yellow;
+        }
+    }
+
+    public void ShowScoreBoard()
+    {
+        scoreText.text = "目前的分數: " + score.ToString();
+        livesText.text = "剩餘生命數: " + lives.ToString();
+        wrongAnswerTimesText.text = "答錯次數: " + wrongAnswerTimes.ToString();
+        rightAnswerTimesText.text = "答對次數: " + rightAnswerTimes.ToString();
+        feverCounterText.text = "連續答對題數: " + feverCounter.ToString();
+
+        {
+            if (gameOver)
+            {
+                questionNumbersText.text = "目前題號: " + currentQuestionNumber.ToString(); //遊戲結束時，文字顯示另外處理
+            }
+            else
+            {
+                questionNumbersText.text = "目前題號: " + (currentQuestionNumber + 1).ToString();   //文字顯示 = 題號 index +1
+            }
         }
     }
 
@@ -288,40 +309,12 @@ public class GameLogic : MonoBehaviour
         }
     }
 
-    private void ShowToggles(int counter)   //性質不一樣，答 1 題才更新 1 題    測試直接用 toggle 而不是 gameobject
-    {
-        for (int i = 0; i < counter; i++)
-        {
-            answerRecordsToggles_Array[i].GetComponent<Toggle>().isOn = answerRecords_Array[i];
-            answerRecordsToggles_Array[i].transform.Find("Background").GetComponent<Image>().color = Color.yellow;    
-        }
-    }
-
-    public void ShowScoreBoard()
-    {
-        scoreText.text = "目前的分數: " + score.ToString();
-        livesText.text = "剩餘生命數: " + lives.ToString();
-        wrongAnswerTimesText.text = "答錯次數: " + wrongAnswerTimes.ToString();
-        rightAnswerTimesText.text = "答對次數: " + rightAnswerTimes.ToString();
-        feverCounterText.text = "連續答對題數: " + feverCounter.ToString();
-
-        {
-            if (gameOver)
-            {
-                questionNumbersText.text = "目前題號: " + currentQuestionNumber.ToString(); //遊戲結束時，文字顯示另外處理
-            }
-            else
-            {
-                questionNumbersText.text = "目前題號: " + (currentQuestionNumber + 1).ToString();   //文字顯示 = 題號 index +1
-            }
-        }
-    }
-
+    #region 點擊Button選項並判斷答案
     public void MakeYourChoice(int youChooseNumber)
     {
         if (gameOver)
         {
-            
+
         }
         else
         {
@@ -354,4 +347,5 @@ public class GameLogic : MonoBehaviour
             UpdateUI();
         }
     }
+    #endregion 點擊Button選項並判斷答案
 }
