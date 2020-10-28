@@ -1,100 +1,154 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
-public class GameResult : MonoBehaviour
+/*
+
+明天從計分板開始，要顯示每一次的答題都選擇第幾項答案
+ 
+ */
+
+public static class ScoreBoard
 {
-    // 我只需要寫方法
+    private static int score;
+    private static int lives;
+    private static int questionNumbers;
+    private static int wrongAnswerTimes;
+    private static int rightAnswerTimes;
+    private static bool gameOver;
 
-    public GameObject objectToDisable, objectToEnable;
-    public bool disable = false, enable = false;
+    private static int feverCounter;
+    private static float timeLimit;
+    private static float[] seconds_Array;
+    private static bool[] answerRecords_Array;
+    private static int[] choiceNumbers_Array; //可以和 answerRecords 合併節省變數數量，但邏輯難度增加且可讀性會降低
 
-    public Text successOrFailText, RemainderText, MoneyText, ExperienceText;
-
-    public int score;
-    public int lives;
-
-    public int questionNumbers;  //改寫
-    public int wrongAnswerTimes;
-    public int rightAnswerTimes;
-
-
-    public float timeLimit = ScoreBoard.GetTimeLimit();
-    public float[] seconds;
-    public bool[] answerRecords;
-
-    void Start()
+    public static int TestValue;    // 多餘程式碼，練習時用到，日後待刪除
+    
+    public static void Initialize(int howManyQuestion, int howManyLives, float countDownSeconds)
     {
-        score = ScoreBoard.GetScore();
-        lives = ScoreBoard.GetLives();
+        score = 0;
+        lives = howManyLives;
+        questionNumbers = howManyQuestion;
+        wrongAnswerTimes = 0;
+        rightAnswerTimes = 0;
+        gameOver = false;
 
-        questionNumbers = ScoreBoard.GetQuestionNumbers();  //改寫
-        wrongAnswerTimes = ScoreBoard.GetWrongAnswerTimes();
-        rightAnswerTimes = ScoreBoard.GetRightAnswerTimes();
-        timeLimit = ScoreBoard.GetTimeLimit();
+        feverCounter = 0;
+        timeLimit = countDownSeconds;
+        seconds_Array = new float[howManyQuestion];
+        answerRecords_Array = new bool[howManyQuestion];
+        choiceNumbers_Array = new int[howManyQuestion];
 
-        seconds = new float[questionNumbers];
-        answerRecords = new bool[questionNumbers];
-
-        for (int i = 0; i < questionNumbers; i++)
+        for (int i = 0; i < howManyQuestion; i++)
         {
-            seconds[i] = ScoreBoard.GetSeconds(i);
-            answerRecords[i] = ScoreBoard.GetAnswerRecords(i);
-        }
-
-        successOrFailText = GameObject.Find("SuccessOrFail").GetComponent<Text>();
-        RemainderText = GameObject.Find("Remainder").GetComponent<Text>();
-        MoneyText = GameObject.Find("Money").GetComponent<Text>();
-        ExperienceText = GameObject.Find("Experience").GetComponent<Text>();
-
-        
-        if (rightAnswerTimes >= 4)
-        {
-            successOrFailText.text = "SUCCESS!";
-            RemainderText.text = "恭喜!!!";
-            MoneyText.text = "+" + 999999.ToString();
-            ExperienceText.text = "+" + 9999.ToString();
-        }
-        else
-        {
-            successOrFailText.text = "FAIL!";
-            RemainderText.text = "補考請再接再厲";
-            MoneyText.text = "+" + 99.ToString();
-            ExperienceText.text = "+" + 9.ToString();
+            seconds_Array[i] = 0;
+            answerRecords_Array[i] = false;
+            choiceNumbers_Array[i] = 100;
         }
     }
 
-    public void OnButtonClick()
+    public static void AnswerRight(int plusScore, int currentQuestionNumber)
     {
-        disable = true;
-        enable = true;
-
-        if (disable)
-        {
-            objectToDisable.SetActive(false);
-        }
-
-        /*
-        if (enable)
-        {
-            objectToEnable.SetActive(true);
-        }
-        */
-
+        rightAnswerTimes += 1;
+        score += plusScore;
+        SetAnswerRecords(currentQuestionNumber);
+        SetFeverCounter();
+        GetAnswerRecords(currentQuestionNumber);
+        GetFeverCounter();
     }
 
-    void Update()
+    public static void AnswerWrong(int minusScore)
     {
-        /*
-        if (disabled)
-        {
-            objectToDisable.SetActive(false);
-        }
-        else
-        {
-            objectToDisable.SetActive(true);
-        }
-        */
+        wrongAnswerTimes += 1;
+        score -= minusScore;
+        lives -= 1;
+        ResetFeverCounter();
+        GetFeverCounter();
+    }
+
+    public static void SetGameover()
+    {
+        gameOver = true;
+    }
+
+    public static void SetFeverCounter()
+    {
+        feverCounter += 1;
+    }
+
+    public static void ResetFeverCounter()
+    {
+        feverCounter = 0;
+    }
+
+    public static void SetSeconds(int currentQuestionNumber, float timeDelataTime)
+    {
+        seconds_Array[currentQuestionNumber] += timeDelataTime;
+    }
+
+    public static void SetAnswerRecords(int currentQuestionNumber)
+    {
+        answerRecords_Array[currentQuestionNumber] = true;
+    }
+
+    public static void SetChoiceNumbers(int currentQuestionNumber, int youChooseNumber)
+    {
+        choiceNumbers_Array[currentQuestionNumber] = youChooseNumber;
+    }
+
+    public static int GetScore()
+    {
+        return score;
+    }
+
+    public static int GetLives()
+    {
+        return lives;
+    }
+
+    public static int GetQuestionNumbers()
+    {
+        return questionNumbers;
+    }
+
+    public static int GetWrongAnswerTimes()
+    {
+        return wrongAnswerTimes;
+    }
+
+    public static int GetRightAnswerTimes()
+    {
+        return rightAnswerTimes;
+    }
+
+    public static bool IsGameOver()
+    {
+        return gameOver;
+    }
+
+    public static int GetFeverCounter()
+    {
+        return feverCounter;
+    }
+
+    public static float GetTimeLimit()
+    {
+        return timeLimit;
+    }
+
+    public static float GetSeconds(int currentQuestionNumber)
+    {
+        return seconds_Array[currentQuestionNumber];
+    }
+
+    public static bool GetAnswerRecords(int currentQuestionNumber)
+    {
+        return answerRecords_Array[currentQuestionNumber];
+    }
+
+    public static int GetChoiceNumbers(int currentQuestionNumber)
+    {
+        return choiceNumbers_Array[currentQuestionNumber];
     }
 }
