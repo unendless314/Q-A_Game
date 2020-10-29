@@ -4,8 +4,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+//程式碼有很大的問題，就是可以連擊，問題出現以前就直接先回答完後面的所有題目
+
 public class GameLogic : MonoBehaviour
 {
+
     /// <summary>
     /// Model + Controller
     /// </summary>
@@ -20,6 +23,7 @@ public class GameLogic : MonoBehaviour
     public int feverCounter;
     public float timeLimit;
     private float timeRemaing;
+    public bool startCountDown;
     public float[] seconds_Array;
     public bool[] answerRecords_Array;
     public int[] choiceNumbers_Array;
@@ -81,7 +85,7 @@ public class GameLogic : MonoBehaviour
          如果要動態產生選項按鈕的話，程式碼要寫在這裡
          */
 
-        UpdateUI();
+        UpdateUI(currentQuestionNumber);
     }
 
     void Update()
@@ -92,7 +96,12 @@ public class GameLogic : MonoBehaviour
         }
         else
         {
-            if (currentQuestionNumber < questionNumbers)
+            if (startCountDown == false)
+            {
+                
+            } else
+
+            if (currentQuestionNumber < questionNumbers)    //題數 index 小於問題總數，且計時開始才算時間
             {
                 ScoreBoard.SetSeconds(currentQuestionNumber, Time.deltaTime);
                 timeRemaing = Mathf.Ceil(timeLimit - ScoreBoard.GetSeconds(currentQuestionNumber));
@@ -102,7 +111,7 @@ public class GameLogic : MonoBehaviour
                     MakeYourChoice(100);
                 }
 
-                countDownTimerText.text = timeRemaing.ToString();
+                countDownTimerText.text = timeRemaing.ToString();   //這其實是UI
             }
         }
     }
@@ -223,30 +232,16 @@ public class GameLogic : MonoBehaviour
     }
     #endregion 設定問題
 
-    public void UpdateUI()
+    public void UpdateUI(int counter)
     {
-        if (gameOver)   //是否還有下一題，沒有的話只顯示答題紀錄，有的話會顯示問題及選項
-        {
-            ShowToggles(currentQuestionNumber);
-            ShowScoreBoard();
+        ShowToggles(counter);
+        ShowScoreBoard();
 
-
-            GameResult.SetActive(true);
-        }
-        else
-        {
-
-            ShowToggles(currentQuestionNumber);
-            ShowScoreBoard();
-
-
-
-            ShowQuestion(currentQuestionNumber);
-            ShowOptions(currentQuestionNumber);
-        }
+        IEnumerator coroutine = ShowNextPage(counter);
+        StartCoroutine(coroutine);
     }
 
-    private void ShowToggles(int counter)   //性質不一樣，答 1 題才更新 1 題    測試直接用 toggle 而不是 gameobject
+    private void ShowToggles(int counter)   //性質不一樣，答 1 題才更新 1 題
     {
         for (int i = 0; i < counter; i++)
         {
@@ -263,16 +258,61 @@ public class GameLogic : MonoBehaviour
         rightAnswerTimesText.text = "答對次數: " + rightAnswerTimes.ToString();
         feverCounterText.text = "連續答對題數: " + feverCounter.ToString();
 
+        if (gameOver)
         {
-            if (gameOver)
-            {
-                questionNumbersText.text = "目前題號: " + currentQuestionNumber.ToString(); //遊戲結束時，文字顯示另外處理
-            }
-            else
-            {
-                questionNumbersText.text = "目前題號: " + (currentQuestionNumber + 1).ToString();   //文字顯示 = 題號 index +1
-            }
+            questionNumbersText.text = "目前題號: " + currentQuestionNumber.ToString(); //遊戲結束時，文字顯示另外處理
         }
+        else
+        {
+            questionNumbersText.text = "目前題號: " + (currentQuestionNumber + 1).ToString();   //文字顯示 = 題號 index +1
+        }
+    }
+
+    private IEnumerator ShowNextPage(int counter)
+    {
+        float waitTime = 0;
+
+        switch (counter)
+        {
+            case 0:
+                waitTime = 1.0f;
+                break;
+            default:
+                waitTime = 2.0f;
+                break;
+        }
+
+        if (counter > 0)
+        {
+            ShowAnswer();
+        }
+
+        yield return new WaitForSeconds(waitTime);
+
+        for (int i = 0; i < optionBGImages_Array.Length; i++)
+        {
+            optionBGImages_Array[i].color = new Color(0.5283019f, 0.3562276f, 0, 1);
+        }
+
+        if (gameOver)
+        {
+            GameResult.SetActive(true);
+        }
+        else
+        {
+            ShowQuestion(currentQuestionNumber);
+            ShowOptions(currentQuestionNumber);
+            startCountDown = true;
+        }
+    }
+
+    private void ShowAnswer()
+    {
+        int choice = choiceNumbers_Array[currentQuestionNumber - 1];
+        int answer = answerNumbers_Array[currentQuestionNumber - 1];
+
+        optionBGImages_Array[choice].color = new Color(1, 0, 0, 1);
+        optionBGImages_Array[answer].color = new Color(1, 0.92f, 0.016f, 1);
     }
 
     public void ShowQuestion(int counter)
@@ -312,17 +352,23 @@ public class GameLogic : MonoBehaviour
     #region 點擊Button選項並判斷答案
     public void MakeYourChoice(int youChooseNumber)
     {
+
         if (gameOver)
         {
 
         }
         else
         {
-            seconds_Array[currentQuestionNumber] = ScoreBoard.GetSeconds(currentQuestionNumber);
-            choiceNumbers_Array[currentQuestionNumber] = youChooseNumber;
-            ScoreBoard.SetChoiceNumbers(currentQuestionNumber, youChooseNumber);
-            CheckAnswer(currentQuestionNumber);
+            if (startCountDown == true) //倒數計時過程中才能選取答案
+            {
+                seconds_Array[currentQuestionNumber] = ScoreBoard.GetSeconds(currentQuestionNumber);
+                choiceNumbers_Array[currentQuestionNumber] = youChooseNumber;
+                ScoreBoard.SetChoiceNumbers(currentQuestionNumber, youChooseNumber);
+                CheckAnswer(currentQuestionNumber);
+            }
         }
+
+        startCountDown = false;
     }
 
     public void CheckAnswer(int counter)
@@ -336,7 +382,7 @@ public class GameLogic : MonoBehaviour
 
             ScoreBoard.AnswerRight(100, currentQuestionNumber);
             CheckIsGameOver();
-            UpdateUI();
+            UpdateUI(currentQuestionNumber);
         }
         else
         {
@@ -344,7 +390,7 @@ public class GameLogic : MonoBehaviour
 
             ScoreBoard.AnswerWrong(100);
             CheckIsGameOver();
-            UpdateUI();
+            UpdateUI(currentQuestionNumber);
         }
     }
     #endregion 點擊Button選項並判斷答案
