@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -86,9 +86,9 @@ public class Evaluation : MonoBehaviour
         secondsText.text = seconds_Array[ChooseQuestion].ToString();
         totalSecondsText.text = totalSeconds.ToString();
 
-        for (int i = 0; i < questions_Array[ChooseQuestion].optionContents.Length; i++)
+        for (int i = 0; i < questions_Array[ChooseQuestion].optionContents_Array.Length; i++)
         {
-            optionContentsText_Array[i].text = ShowPrefix(i) + " " + questions_Array[ChooseQuestion].optionContents[i];
+            optionContentsText_Array[i].text = ShowPrefix(i) + " " + questions_Array[ChooseQuestion].optionContents_Array[i];
         }
 
         answeNumberText.text = "正確答案為: " + ShowPrefix(answerNumbers_Array[ChooseQuestion]);
@@ -112,5 +112,3 @@ public class Evaluation : MonoBehaviour
         }
     }
 }
-
-
