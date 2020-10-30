@@ -98,8 +98,9 @@ public class GameLogic : MonoBehaviour
         {
             if (startCountDown == false)
             {
-                
-            } else
+
+            }
+            else
 
             if (currentQuestionNumber < questionNumbers)    //題數 index 小於問題總數，且計時開始才算時間
             {
@@ -311,8 +312,15 @@ public class GameLogic : MonoBehaviour
         int choice = choiceNumbers_Array[currentQuestionNumber - 1];
         int answer = answerNumbers_Array[currentQuestionNumber - 1];
 
-        optionBGImages_Array[choice].color = new Color(1, 0, 0, 1);
-        optionBGImages_Array[answer].color = new Color(1, 0.92f, 0.016f, 1);
+        if (choice == 100)
+        {
+            optionBGImages_Array[answer].color = new Color(1, 0.92f, 0.016f, 1);
+        }
+        else
+        {
+            optionBGImages_Array[choice].color = new Color(1, 0, 0, 1);
+            optionBGImages_Array[answer].color = new Color(1, 0.92f, 0.016f, 1);
+        }
     }
 
     public void ShowQuestion(int counter)
@@ -322,13 +330,13 @@ public class GameLogic : MonoBehaviour
 
     public void ShowOptions(int counter)
     {
-        int howManyOptions = questions_Array[counter].optionContents.Length;
+        int howManyOptions = questions_Array[counter].optionContents_Array.Length;
         questions_Array[counter].Initialize(howManyOptions);  //關鍵在於把正確答案的編號丟進布林陣列
         questions_Array[counter].Permutation(howManyOptions); //先創布林陣列，才能開始進行亂數排序
 
         for (int i = 0; i < howManyOptions; i++)
         {
-            optionContentsText_Array[i].text = AddPrefix(i) + questions_Array[counter].optionContents[i];
+            optionContentsText_Array[i].text = AddPrefix(i) + questions_Array[counter].optionContents_Array[i];
         }
     }
 
@@ -373,7 +381,7 @@ public class GameLogic : MonoBehaviour
 
     public void CheckAnswer(int counter)
     {
-        questions_Array[counter].FindAnswerNumber(questions_Array[counter].optionOrder.Length);
+        questions_Array[counter].FindAnswerNumber(questions_Array[counter].optionOrder_Array.Length);
         answerNumbers_Array[counter] = questions_Array[counter].answerNumber;
 
         if (choiceNumbers_Array[currentQuestionNumber] == answerNumbers_Array[counter])
