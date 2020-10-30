@@ -7,22 +7,22 @@ public class Question
 {
     public int questionID;
     public string questionContents;
-    public string[] optionContents;
+    public string[] optionContents_Array;
     public int answerNumber;
     public string answerContents;
-    public bool[] optionOrder;
+    public bool[] optionOrder_Array;
 
     public void Initialize(int howManyOptions) //初始化，重現原始問題和原始答案
     {
-        optionOrder = new bool[howManyOptions];
+        optionOrder_Array = new bool[howManyOptions];
 
         for (int i = 0; i < howManyOptions; i++)
         {
-            optionOrder[i] = false;
+            optionOrder_Array[i] = false;
 
             if (i == answerNumber)
             {
-                optionOrder[i] = true;
+                optionOrder_Array[i] = true;
             }
         }
     }
@@ -39,8 +39,8 @@ public class Question
 
         for (int i = 0; i < howManyOptions; i++)
         {
-            optionListA.Add(optionContents[i]); //A 集合塞了所有的選項
-            optionOrderA.Add(optionOrder[i]);   //A 集合塞了所有的布林
+            optionListA.Add(optionContents_Array[i]); //A 集合塞了所有的選項
+            optionOrderA.Add(optionOrder_Array[i]);   //A 集合塞了所有的布林
         }
 
         // optionListA = optionContents.ToList();  //Linq 函式庫寫法
@@ -59,8 +59,8 @@ public class Question
 
         for (int i = 0; i < howManyOptions; i++)    //將新排序後的 B 集合元素丟回所有的選項中
         {
-            optionContents[i] = optionListB[i];
-            optionOrder[i] = optionOrderB[i];
+            optionContents_Array[i] = optionListB[i];
+            optionOrder_Array[i] = optionOrderB[i];
         }
 
         //  optionContents = optionListB.ToArray(); //Linq 函式庫寫法
@@ -71,7 +71,7 @@ public class Question
     {
         for (int i = 0; i < howManyOptions; i++)
         {
-            if (optionOrder[i] == true)
+            if (optionOrder_Array[i] == true)
             {
                 answerNumber = i;
             }
