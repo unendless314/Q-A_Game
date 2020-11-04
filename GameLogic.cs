@@ -1,17 +1,11 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine;
 
-public class GameLogic : MonoBehaviour
+public class StoryGamePlay : MonoBehaviour
 {
-
-    /// <summary>
-    /// Model + Controller
-    /// </summary>
-
-    public int score;
+    public int score;   //目前用不到
     public int lives;
     public int questionNumbers;
     public int wrongAnswerTimes;
@@ -33,64 +27,21 @@ public class GameLogic : MonoBehaviour
     public string[] optionContents_Array;
     public bool[] optionOrder_Array;
 
-    public TestQuestion1[] questions_Array;
-
-    /// <summary>
-    /// View + UI
-    /// </summary>
-
-#if UNITY_ANDROID
-
-#else
-
-#endif
-
+    public Question1[] questions_Array;
     public Text questionContentsText;
     public Text[] optionContentsText_Array;
-    public Text scoreText;
-    public Text livesText;
-    public Text questionNumbersText;
-    public Text wrongAnswerTimesText;
-    public Text rightAnswerTimesText;
-    public Text countDownTimerText;
-    public Text feverCounterText;
-    public Image[] optionBGImages_Array;
-    public GameObject[] answerRecordsToggles_Array;
+    public GameObject[] heartImagesObj;
 
-    public GameObject GameResult;
+    public GameObject correctObj;
+    public GameObject incorrectObj;
 
-    // Start is called before the first frame update
+    public GameObject result_AObject;
+    public GameObject result_BObject;
+    public GameObject readAgainObj;
+    
     void Start()
     {
-        ///////// 上限 5 問題 4 選項，暫時先寫死
-        answerRecords_Array = new bool[5];
-        answerRecordsToggles_Array = new GameObject[5];
-        answerNumbers_Array = new int[5];
-        choiceNumbers_Array = new int[] { 100, 100, 100, 100, 100 }; //new int[5]; 沒有回答的問題，都會變成選 100
-        optionContentsText_Array = new Text[4];
-        optionBGImages_Array = new Image[4];
-        seconds_Array = new float[5];
-        optionContents_Array = new string[4];
-        optionOrder_Array = new bool[4];
-        ///////// 以上先寫死，日後再修改優化
-
-        GetUIComponents();
-
-        ScoreBoard.Initialize(questionNumbers, lives, timeLimit);   //設定每場遊戲有幾個題目 + 幾條命 + 倒數幾秒
-
-        UpdatePlayStatus();
-        //databaseQuestionNumbers = JsonDataManager.Singleton.listTestQuestionData.Count; //這裏要接資料庫
-        databaseQuestionNumbers = JsonDataManager.Singleton.processedList.Count; //這裏要接資料庫
-        
-
-        SetQuestionIndexes(questionNumbers, databaseQuestionNumbers);    //獲取問題編號陣列，questionIDs 陣列初始化結束
-        SetQuestions();
-
-        /*
-         如果要動態產生選項按鈕的話，程式碼要寫在這裡
-         */
-
-        UpdateUI(currentQuestionNumber);
+        Initilize();
     }
 
     void Update()
@@ -116,39 +67,52 @@ public class GameLogic : MonoBehaviour
                 {
                     MakeYourChoice(100);
                 }
-
-                countDownTimerText.text = timeRemaing.ToString();   //這其實是UI
             }
         }
     }
 
-    #region 取得UI元件
-    private void GetUIComponents()
+    public void Initilize()
     {
-        //既然是 public 的話，為什麼不用拉的就好呢?
-        questionContentsText = GameObject.Find("Question").GetComponent<Text>();
-        scoreText = GameObject.Find("Score").GetComponent<Text>();
-        livesText = GameObject.Find("Lives").GetComponent<Text>();
-        questionNumbersText = GameObject.Find("QuestionNumber").GetComponent<Text>();
-        wrongAnswerTimesText = GameObject.Find("WrongAnswer").GetComponent<Text>();
-        rightAnswerTimesText = GameObject.Find("RightAnswer").GetComponent<Text>();
-        countDownTimerText = GameObject.Find("CountDownTimer").GetComponent<Text>();
-        feverCounterText = GameObject.Find("FeverCounter").GetComponent<Text>();
+        answerRecords_Array = new bool[5];
+        answerNumbers_Array = new int[5];
+        choiceNumbers_Array = new int[] { 100, 100, 100, 100, 100 }; //new int[5]; 沒有回答的問題，都會變成選 100
+        seconds_Array = new float[5];
+        optionContents_Array = new string[4];
+        optionOrder_Array = new bool[4];
+        ///////// 以上先寫死，日後再修改優化
 
-        for (int i = 0; i < answerRecordsToggles_Array.Length; i++)
-        {
-            answerRecordsToggles_Array[i] = GameObject.Find("Toggle" + (i + 1).ToString());
-        }
+        /// 可以用這種寫法，但是很爛，因為 coroutine 在物件 inactive 時執行會報錯，可以用 try catch 繞過這個問題，但一樣很爛
 
+        questionContentsText.text = "QUESTION";
         for (int i = 0; i < optionContentsText_Array.Length; i++)
         {
-            optionContentsText_Array[i] = GameObject.Find("Option" + (i + 1).ToString()).GetComponent<Text>();
-            optionBGImages_Array[i] = GameObject.Find("OptionBG" + (i + 1).ToString()).GetComponent<Image>();
+            optionContentsText_Array[i].text = "ANSWER";
         }
-    }
-    #endregion 取得UI元件
 
-    #region 檢查遊戲是否已經結束
+        ///
+
+        GetUIComponents();
+
+        ScoreBoard.Initialize(questionNumbers, 3, timeLimit);   //設定每場遊戲有幾個題目 + 幾條命 + 倒數幾秒
+
+        UpdatePlayStatus();
+        databaseQuestionNumbers = JsonDataManager.Singleton.processedList.Count; //這裏要接資料庫
+
+        SetQuestionIndexes(questionNumbers, databaseQuestionNumbers);    //獲取問題編號陣列，questionIDs 陣列初始化結束
+        SetQuestions();
+
+        /*
+         如果要動態產生選項按鈕的話，程式碼要寫在這裡
+         */
+
+        UpdateUI(currentQuestionNumber);
+    }
+
+    public void GetUIComponents()
+    {
+
+    }
+
     public void CheckIsGameOver()
     {
         UpdatePlayStatus();
@@ -173,9 +137,7 @@ public class GameLogic : MonoBehaviour
             return;
         }
     }
-    #endregion 檢查遊戲是否已經結束
 
-    #region 更新計分板
     public void UpdatePlayStatus()
     {
         score = ScoreBoard.GetScore();
@@ -194,10 +156,7 @@ public class GameLogic : MonoBehaviour
             answerRecords_Array[i] = ScoreBoard.GetAnswerRecords(i);
         }
     }
-    #endregion 更新計分板
 
-
-    #region 設定問題
     public void SetQuestionIndexes(int questionNumbers, int databaseQuestionNumbers)  //預設取幾道題目，總題庫量多少題，這裏要接資料庫
     {
         //會需要取題目編號範圍
@@ -208,7 +167,7 @@ public class GameLogic : MonoBehaviour
         }
 
         questionIDs_Array = new int[questionNumbers];
-        questions_Array = new TestQuestion1[questionNumbers];
+        questions_Array = new Question1[questionNumbers];
 
         for (int i = 0; i < questionNumbers; i++)
         {
@@ -225,7 +184,6 @@ public class GameLogic : MonoBehaviour
             }
 
             questionIDs_Array[i] = JsonDataManager.Singleton.processedList[randomQuestionIndex].i_id;
-
         }
     }
 
@@ -233,10 +191,9 @@ public class GameLogic : MonoBehaviour
     {
         for (int i = 0; i < questionIDs_Array.Length; i++)
         {
-            questions_Array[i] = JsonDataManager.Singleton.processedList.Find((TestQuestion1 obj) => obj.i_id == questionIDs_Array[i]);
+            questions_Array[i] = JsonDataManager.Singleton.processedList.Find((Question1 obj) => obj.i_id == questionIDs_Array[i]);
         }
     }
-    #endregion 設定問題
 
     public void UpdateUI(int counter)
     {
@@ -247,34 +204,35 @@ public class GameLogic : MonoBehaviour
         StartCoroutine(coroutine);
     }
 
-    private void ShowToggles(int counter)   //性質不一樣，答 1 題才更新 1 題
+    public void ShowToggles(int counter)   //性質不一樣，答 1 題才更新 1 題
     {
+
+        ////// 有點爛的寫法，先把所有的愛心關掉，再根據目前生命數量把愛心開起來
+
+        for (int i = 0; i < 3; i++)
+        {
+            heartImagesObj[i].SetActive(false);
+        }
+
+        for (int i = 0; i < lives; i++)
+        {
+            heartImagesObj[i].SetActive(true);
+        }
+        //////
+
         for (int i = 0; i < counter; i++)
         {
-            answerRecordsToggles_Array[i].GetComponent<Toggle>().isOn = answerRecords_Array[i];
-            answerRecordsToggles_Array[i].transform.Find("Background").GetComponent<Image>().color = Color.yellow;
+            //answerRecordsToggles_Array[i].GetComponent<Toggle>().isOn = answerRecords_Array[i];
+            //answerRecordsToggles_Array[i].transform.Find("Background").GetComponent<Image>().color = Color.yellow;
         }
     }
 
     public void ShowScoreBoard()
     {
-        scoreText.text = "目前的分數: " + score.ToString();
-        livesText.text = "剩餘生命數: " + lives.ToString();
-        wrongAnswerTimesText.text = "答錯次數: " + wrongAnswerTimes.ToString();
-        rightAnswerTimesText.text = "答對次數: " + rightAnswerTimes.ToString();
-        feverCounterText.text = "連續答對題數: " + feverCounter.ToString();
-
-        if (gameOver)
-        {
-            questionNumbersText.text = "目前題號: " + currentQuestionNumber.ToString(); //遊戲結束時，文字顯示另外處理
-        }
-        else
-        {
-            questionNumbersText.text = "目前題號: " + (currentQuestionNumber + 1).ToString();   //文字顯示 = 題號 index +1
-        }
+        
     }
 
-    private IEnumerator ShowNextPage(int counter)
+    public IEnumerator ShowNextPage(int counter)
     {
         float waitTime = 0;
 
@@ -295,14 +253,9 @@ public class GameLogic : MonoBehaviour
 
         yield return new WaitForSeconds(waitTime);
 
-        for (int i = 0; i < optionBGImages_Array.Length; i++)
-        {
-            optionBGImages_Array[i].color = new Color(0.5283019f, 0.3562276f, 0, 1);
-        }
-
         if (gameOver)
         {
-            GameResult.SetActive(true);
+            ShowGameResult();
         }
         else
         {
@@ -312,19 +265,30 @@ public class GameLogic : MonoBehaviour
         }
     }
 
-    private void ShowAnswer()
+    public void ShowAnswer()
     {
         int choice = choiceNumbers_Array[currentQuestionNumber - 1];
         int answer = answerNumbers_Array[currentQuestionNumber - 1];
 
         if (choice == 100)
         {
-            optionBGImages_Array[answer].color = new Color(1, 0.92f, 0.016f, 1);
+
         }
         else
         {
-            optionBGImages_Array[choice].color = new Color(1, 0, 0, 1);
-            optionBGImages_Array[answer].color = new Color(1, 0.92f, 0.016f, 1);
+            
+        }
+    }
+
+    public void ShowGameResult()
+    {
+        if (rightAnswerTimes >= 4)
+        {
+            result_AObject.SetActive(true);
+        }
+        else
+        {
+            result_BObject.SetActive(true);
         }
     }
 
@@ -387,10 +351,10 @@ public class GameLogic : MonoBehaviour
         }
 
         //// 1103 追加
-        questions_Array[currentQuestionNumber].setOptionContents(optionContents_Array[0], optionContents_Array[1], optionContents_Array[2], optionContents_Array[3]);
+        questions_Array[currentQuestionNumber].setOptionContentsArray(optionContents_Array[0], optionContents_Array[1], optionContents_Array[2], optionContents_Array[3]);
     }
 
-    private string AddPrefix(int i) //選項加開頭字串
+    public string AddPrefix(int i) //選項加開頭字串
     {
         switch (i)
         {
@@ -407,7 +371,6 @@ public class GameLogic : MonoBehaviour
         }
     }
 
-    #region 點擊Button選項並判斷答案
     public void MakeYourChoice(int youChooseNumber)
     {
 
@@ -432,7 +395,7 @@ public class GameLogic : MonoBehaviour
     public void CheckAnswer(int counter)
     {
         int answerNumber = -1;  //答案 -1 不存在
-        
+
         for (int i = 0; i < optionOrder_Array.Length; i++)
         {
             if (optionOrder_Array[i] == true)
@@ -461,7 +424,4 @@ public class GameLogic : MonoBehaviour
             UpdateUI(currentQuestionNumber);
         }
     }
-
-
-    #endregion 點擊Button選項並判斷答案
 }
