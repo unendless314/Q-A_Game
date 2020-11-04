@@ -30,7 +30,10 @@ public class StoryGamePlay : MonoBehaviour
     public Question1[] questions_Array;
     public Text questionContentsText;
     public Text[] optionContentsText_Array;
+    public Slider timeSlider;
     public GameObject[] heartImagesObj;
+    public RawImage[] checkRawImages;
+    public Texture[] iconTextures;
 
     public GameObject correctObj;
     public GameObject incorrectObj;
@@ -61,7 +64,9 @@ public class StoryGamePlay : MonoBehaviour
             if (currentQuestionNumber < questionNumbers)    //題數 index 小於問題總數，且計時開始才算時間
             {
                 ScoreBoard.SetSeconds(currentQuestionNumber, Time.deltaTime);
-                timeRemaing = Mathf.Ceil(timeLimit - ScoreBoard.GetSeconds(currentQuestionNumber));
+                //timeRemaing = Mathf.Ceil(timeLimit - ScoreBoard.GetSeconds(currentQuestionNumber));
+                timeRemaing = timeLimit - ScoreBoard.GetSeconds(currentQuestionNumber);
+                timeSlider.value = (float)(timeRemaing / timeLimit);
 
                 if (timeRemaing <= 0)
                 {
@@ -87,6 +92,13 @@ public class StoryGamePlay : MonoBehaviour
         for (int i = 0; i < optionContentsText_Array.Length; i++)
         {
             optionContentsText_Array[i].text = "ANSWER";
+        }
+
+        timeSlider.value = 1;
+
+        for (int i = 0; i < checkRawImages.Length; i++)
+        {
+            checkRawImages[i].texture = iconTextures[0];
         }
 
         ///
@@ -218,6 +230,22 @@ public class StoryGamePlay : MonoBehaviour
         {
             heartImagesObj[i].SetActive(true);
         }
+
+        if (counter < 1)    //回答第一題的時候，第一題答案根本沒出來，所以不用顯示答對與否
+        {
+            return;
+        }
+
+        if (answerRecords_Array[counter - 1])   //從第二題開始，更新上一題的回答結果
+        {
+            checkRawImages[counter - 1].texture = iconTextures[1];
+        }
+        else
+        {
+            checkRawImages[counter - 1].texture = iconTextures[2];
+        }
+        
+
         //////
 
         for (int i = 0; i < counter; i++)
@@ -252,6 +280,9 @@ public class StoryGamePlay : MonoBehaviour
         }
 
         yield return new WaitForSeconds(waitTime);
+
+        correctObj.SetActive(false);
+        incorrectObj.SetActive(false);
 
         if (gameOver)
         {
@@ -409,7 +440,8 @@ public class StoryGamePlay : MonoBehaviour
 
         if (choiceNumbers_Array[currentQuestionNumber] == answerNumbers_Array[counter])
         {
-            Debug.Log("回答正確");
+            correctObj.SetActive(true);
+            //Debug.Log("回答正確");
 
             ScoreBoard.AnswerRight(100, currentQuestionNumber);
             CheckIsGameOver();
@@ -417,11 +449,13 @@ public class StoryGamePlay : MonoBehaviour
         }
         else
         {
-            Debug.Log("回答錯誤");
+            incorrectObj.SetActive(true);
+            //Debug.Log("回答錯誤");
 
             ScoreBoard.AnswerWrong(100);
             CheckIsGameOver();
             UpdateUI(currentQuestionNumber);
         }
     }
+
 }
