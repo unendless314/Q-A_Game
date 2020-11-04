@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -18,7 +18,7 @@ public class Evaluation : MonoBehaviour
     public GameObject[] answerRecordsToggles_Array;
     public Toggle[] selectToggles_Array;
 
-    public Question[] questions_Array;
+    public TestQuestion1[] questions_Array;
     public Text questionContentsText;
     public Text[] optionContentsText_Array;
     public Text answeNumberText;
@@ -82,13 +82,13 @@ public class Evaluation : MonoBehaviour
 
     public void ShowContents(int ChooseQuestion)
     {
-        questionContentsText.text = "問題" + (ChooseQuestion + 1).ToString() + ": " + questions_Array[ChooseQuestion].questionContents;
+        questionContentsText.text = "問題" + (ChooseQuestion + 1).ToString() + ": " + questions_Array[ChooseQuestion].s_QuestionContents;
         secondsText.text = seconds_Array[ChooseQuestion].ToString();
         totalSecondsText.text = totalSeconds.ToString();
 
-        for (int i = 0; i < questions_Array[ChooseQuestion].optionContents.Length; i++)
+        for (int i = 0; i < 4; i++)
         {
-            optionContentsText_Array[i].text = ShowPrefix(i) + " " + questions_Array[ChooseQuestion].optionContents[i];
+            optionContentsText_Array[i].text = ShowPrefix(i) + " " + gameLogic.optionContents_Array[i];
         }
 
         answeNumberText.text = "正確答案為: " + ShowPrefix(answerNumbers_Array[ChooseQuestion]);
@@ -112,5 +112,3 @@ public class Evaluation : MonoBehaviour
         }
     }
 }
-
-
