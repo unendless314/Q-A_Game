@@ -2,12 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-/*
-
-明天從計分板開始，要顯示每一次的答題都選擇第幾項答案
- 
- */
-
 public static class ScoreBoard
 {
     private static int score;
