@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine.UI;
 using UnityEngine;
 
+//答題紀錄沒有叉叉用疊圖，減命時愛心用虛線表示
+
 public class StoryGamePlay : MonoBehaviour
 {
     public int score;   //目前用不到
@@ -88,10 +90,10 @@ public class StoryGamePlay : MonoBehaviour
 
         /// 可以用這種寫法，但是很爛，因為 coroutine 在物件 inactive 時執行會報錯，可以用 try catch 繞過這個問題，但一樣很爛
 
-        questionContentsText.text = "QUESTION";
+        questionContentsText.text = "";
         for (int i = 0; i < optionContentsText_Array.Length; i++)
         {
-            optionContentsText_Array[i].text = "ANSWER";
+            optionContentsText_Array[i].text = "";
         }
 
         timeSlider.value = 1;
