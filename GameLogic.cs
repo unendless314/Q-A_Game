@@ -46,7 +46,9 @@ public class StoryGamePlay : MonoBehaviour
     
     void Start()
     {
-        Initilize();
+        //Initilize();    //目前可省略，因為選關卡時就更新完成
+
+        UpdateUI(currentQuestionNumber);
     }
 
     void Update()
@@ -105,8 +107,6 @@ public class StoryGamePlay : MonoBehaviour
 
         ///
 
-        GetUIComponents();
-
         ScoreBoard.Initialize(questionNumbers, 3, timeLimit);   //設定每場遊戲有幾個題目 + 幾條命 + 倒數幾秒
 
         UpdatePlayStatus();
@@ -118,13 +118,6 @@ public class StoryGamePlay : MonoBehaviour
         /*
          如果要動態產生選項按鈕的話，程式碼要寫在這裡
          */
-
-        UpdateUI(currentQuestionNumber);
-    }
-
-    public void GetUIComponents()
-    {
-
     }
 
     public void CheckIsGameOver()
@@ -212,7 +205,6 @@ public class StoryGamePlay : MonoBehaviour
     public void UpdateUI(int counter)
     {
         ShowToggles(counter);
-        ShowScoreBoard();
 
         IEnumerator coroutine = ShowNextPage(counter);
         StartCoroutine(coroutine);
@@ -238,6 +230,8 @@ public class StoryGamePlay : MonoBehaviour
             return;
         }
 
+        //只顯示勾勾的話，這裡要改寫
+
         if (answerRecords_Array[counter - 1])   //從第二題開始，更新上一題的回答結果
         {
             checkRawImages[counter - 1].texture = iconTextures[1];
@@ -246,21 +240,8 @@ public class StoryGamePlay : MonoBehaviour
         {
             checkRawImages[counter - 1].texture = iconTextures[2];
         }
-        
-
-        //////
-
-        for (int i = 0; i < counter; i++)
-        {
-            //answerRecordsToggles_Array[i].GetComponent<Toggle>().isOn = answerRecords_Array[i];
-            //answerRecordsToggles_Array[i].transform.Find("Background").GetComponent<Image>().color = Color.yellow;
-        }
     }
 
-    public void ShowScoreBoard()
-    {
-        
-    }
 
     public IEnumerator ShowNextPage(int counter)
     {
@@ -383,8 +364,11 @@ public class StoryGamePlay : MonoBehaviour
             optionOrder_Array[i] = optionOrderB[i];
         }
 
-        //// 1103 追加
-        questions_Array[currentQuestionNumber].setOptionContentsArray(optionContents_Array[0], optionContents_Array[1], optionContents_Array[2], optionContents_Array[3]);
+        questions_Array[currentQuestionNumber].s_Answer = optionContents_Array[0];  //不再是答案，只是選項
+        questions_Array[currentQuestionNumber].s_Option1 = optionContents_Array[1];
+        questions_Array[currentQuestionNumber].s_Option2 = optionContents_Array[2];
+        questions_Array[currentQuestionNumber].s_Option3 = optionContents_Array[3];
+
     }
 
     public string AddPrefix(int i) //選項加開頭字串
