@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using UnityEngine.UI;
 using UnityEngine;
 
-//答題紀錄沒有叉叉用疊圖，減命時愛心用虛線表示
-
 public class StoryGamePlay : MonoBehaviour
 {
     public int score;   //目前用不到
@@ -33,9 +31,10 @@ public class StoryGamePlay : MonoBehaviour
     public Text questionContentsText;
     public Text[] optionContentsText_Array;
     public Slider timeSlider;
-    public GameObject[] heartImagesObj;
-    public RawImage[] checkRawImages;
-    public Texture[] iconTextures;
+    public RawImage[] heartRawImage_Array;
+    public Texture[] heartImageTexture_Array;    //
+    public RawImage[] checkRawImage_Array;
+    public Image[] optionBtnImage_Array;
 
     public GameObject correctObj;
     public GameObject incorrectObj;
@@ -46,8 +45,6 @@ public class StoryGamePlay : MonoBehaviour
     
     void Start()
     {
-        //Initilize();    //目前可省略，因為選關卡時就更新完成
-
         UpdateUI(currentQuestionNumber);
     }
 
@@ -80,7 +77,7 @@ public class StoryGamePlay : MonoBehaviour
         }
     }
 
-    public void Initilize()
+    public void Initialize()
     {
         answerRecords_Array = new bool[5];
         answerNumbers_Array = new int[5];
@@ -100,9 +97,14 @@ public class StoryGamePlay : MonoBehaviour
 
         timeSlider.value = 1;
 
-        for (int i = 0; i < checkRawImages.Length; i++)
+        for (int i = 0; i < 3; i++)
         {
-            checkRawImages[i].texture = iconTextures[0];
+            heartRawImage_Array[i].texture = heartImageTexture_Array[1];
+        }
+
+        for (int i = 0; i < checkRawImage_Array.Length; i++)
+        {
+            checkRawImage_Array[i].enabled = false;
         }
 
         ///
@@ -118,6 +120,8 @@ public class StoryGamePlay : MonoBehaviour
         /*
          如果要動態產生選項按鈕的話，程式碼要寫在這裡
          */
+
+        UpdateUI(currentQuestionNumber);    //這裏掛 updateUI 有致命的缺陷，就是選地圖會報錯，但是不掛就無法重複玩
     }
 
     public void CheckIsGameOver()
@@ -206,8 +210,17 @@ public class StoryGamePlay : MonoBehaviour
     {
         ShowToggles(counter);
 
-        IEnumerator coroutine = ShowNextPage(counter);
-        StartCoroutine(coroutine);
+        //即使寫 try catch 還是會報錯
+
+        try
+        {
+            IEnumerator coroutine = ShowNextPage(counter);
+            StartCoroutine(coroutine);
+        }
+        catch (System.Exception ex)
+        {
+            Debug.Log(ex + " 例外錯誤阻止了遊戲開始");
+        }
     }
 
     public void ShowToggles(int counter)   //性質不一樣，答 1 題才更新 1 題
@@ -217,28 +230,22 @@ public class StoryGamePlay : MonoBehaviour
 
         for (int i = 0; i < 3; i++)
         {
-            heartImagesObj[i].SetActive(false);
+            heartRawImage_Array[i].texture = heartImageTexture_Array[0];
         }
 
         for (int i = 0; i < lives; i++)
         {
-            heartImagesObj[i].SetActive(true);
+            heartRawImage_Array[i].texture = heartImageTexture_Array[1];
+        }
+
+        for (int i = 0; i < rightAnswerTimes; i++)
+        {
+            checkRawImage_Array[i].enabled = true;
         }
 
         if (counter < 1)    //回答第一題的時候，第一題答案根本沒出來，所以不用顯示答對與否
         {
             return;
-        }
-
-        //只顯示勾勾的話，這裡要改寫
-
-        if (answerRecords_Array[counter - 1])   //從第二題開始，更新上一題的回答結果
-        {
-            checkRawImages[counter - 1].texture = iconTextures[1];
-        }
-        else
-        {
-            checkRawImages[counter - 1].texture = iconTextures[2];
         }
     }
 
@@ -296,6 +303,7 @@ public class StoryGamePlay : MonoBehaviour
 
     public void ShowGameResult()
     {
+
         if (rightAnswerTimes >= 4)
         {
             result_AObject.SetActive(true);
