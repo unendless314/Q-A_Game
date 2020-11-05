@@ -6,109 +6,89 @@ using UnityEngine.UI;
 
 public class Evaluation : MonoBehaviour
 {
-    public GameLogic gameLogic;
+    public StoryGamePlay dataFromLastStoryGamePlay;
 
-    public int questionNumbers;
-    public float[] seconds_Array;
-    public bool[] answerRecords_Array;
-    public int[] choiceNumbers_Array;
-    public int[] answerNumbers_Array;
-    public float totalSeconds;
+    public Question1[] questions_Array;
+    public Button[] expandButton_Array;
+    public Button[] hideButton_Array;
+    public Text[] questionContents_Array;
+    public Text[] optionContents_Array;
+    public Image[] favoriteImages_Array;
+    public Image[] answerRecordImages_Array;
+    public Sprite[] heartSprites_Array;
+    public Sprite[] answerRecordSprites_Array;
 
-    public GameObject[] answerRecordsToggles_Array;
-    public Toggle[] selectToggles_Array;
-
-    public TestQuestion1[] questions_Array;
-    public Text questionContentsText;
-    public Text[] optionContentsText_Array;
-    public Text answeNumberText;
-    public Text choiceNumberText;
-    public Text secondsText;
-    public Text totalSecondsText;
-
-
-    // Start is called before the first frame update
     void Start()
     {
-        gameLogic = GameObject.Find("GameLogic").GetComponent<GameLogic>();
 
-        ///////// 上限 5 問題 4 選項，暫時先寫死
-        selectToggles_Array = new Toggle[5];
-        optionContentsText_Array = new Text[4];
-        answerRecordsToggles_Array = new GameObject[5];
-        ///////// 以上先寫死，日後再修改優化
-
-        questionNumbers = gameLogic.questionNumbers;
-        seconds_Array = gameLogic.seconds_Array;
-        answerRecords_Array = gameLogic.answerRecords_Array;
-        choiceNumbers_Array = gameLogic.choiceNumbers_Array;
-        answerNumbers_Array = gameLogic.answerNumbers_Array;
-        questions_Array = gameLogic.questions_Array;
-
-        for (int i = 0; i < questionNumbers; i++)
-        {
-            totalSeconds += seconds_Array[i];
-        }
-
-        GetUIComponents();
-        ShowContents(0);
     }
 
-    private void GetUIComponents()
+    public void Initialze()
     {
-        questionContentsText = transform.Find("Question").GetComponent<Text>();
-        secondsText = transform.Find("Seconds").GetComponent<Text>();
-        totalSecondsText = transform.Find("TotalSeconds").GetComponent<Text>();
+        questions_Array = new Question1[5];
 
-        for (int i = 0; i < 4; i++) //暫時寫死為 4 選項
+        for (int i = 0; i < questions_Array.Length; i++)
         {
-            optionContentsText_Array[i] = transform.Find("Option" + (i + 1).ToString()).GetComponent<Text>();
+            questions_Array[i].s_QuestionContents = dataFromLastStoryGamePlay.questions_Array[i].s_QuestionContents;
+            questions_Array[i].s_Answer = dataFromLastStoryGamePlay.questions_Array[i].s_Answer;
+            questions_Array[i].s_Option1 = dataFromLastStoryGamePlay.questions_Array[i].s_Option1;
+            questions_Array[i].s_Option2 = dataFromLastStoryGamePlay.questions_Array[i].s_Option2;
+            questions_Array[i].s_Option3 = dataFromLastStoryGamePlay.questions_Array[i].s_Option3;
         }
 
-        for (int i = 0; i < questionNumbers; i++)
+        for (int i = 0; i < questions_Array.Length; i++)
         {
-            selectToggles_Array[i] = transform.Find("SelectToggles").transform.Find("Question" + (i + 1).ToString()).GetComponent<Toggle>();   //可以直接用 Toggle，因為只是要點選
+            questionContents_Array[i].text = "題目: " + questions_Array[i].s_QuestionContents;
+
+            optionContents_Array[i].text = "Q. " + questions_Array[i].s_QuestionContents + "\n" + "\n" +
+            "A. " + questions_Array[i].s_Answer + "\n" +
+            "B. " + questions_Array[i].s_Option1 + "\n" +
+            "C. " + questions_Array[i].s_Option2 + "\n" +
+            "D. " + questions_Array[i].s_Option3;
         }
 
-        for (int i = 0; i < answerRecordsToggles_Array.Length; i++)
+        for (int i = 0; i < questions_Array.Length; i++)
         {
-            answerRecordsToggles_Array[i] = GameObject.Find("AnswerRecord" + (i + 1).ToString());   //如果有要改背景顏色的話，變數創立時只能用 GameObject
-            answerRecordsToggles_Array[i].GetComponent<Toggle>().isOn = answerRecords_Array[i];
+            answerRecordImages_Array[i].sprite = SetSpriteForAnswerRecords(i);
+            answerRecordImages_Array[i].color = SetColorForAnserRecords(i);
         }
-
-        answeNumberText = transform.Find("AnswerNumber").GetComponent<Text>();
-        choiceNumberText = transform.Find("ChoiceNumber").GetComponent<Text>();
     }
 
-    public void ShowContents(int ChooseQuestion)
+    public Sprite SetSpriteForAnswerRecords(int index)
     {
-        questionContentsText.text = "問題" + (ChooseQuestion + 1).ToString() + ": " + questions_Array[ChooseQuestion].s_QuestionContents;
-        secondsText.text = seconds_Array[ChooseQuestion].ToString();
-        totalSecondsText.text = totalSeconds.ToString();
-
-        for (int i = 0; i < 4; i++)
+        if (dataFromLastStoryGamePlay.answerRecords_Array[index])
         {
-            optionContentsText_Array[i].text = ShowPrefix(i) + " " + gameLogic.optionContents_Array[i];
+            return answerRecordSprites_Array[1];
         }
-
-        answeNumberText.text = "正確答案為: " + ShowPrefix(answerNumbers_Array[ChooseQuestion]);
-        choiceNumberText.text = "您的選項為: " + ShowPrefix(choiceNumbers_Array[ChooseQuestion]);
+        else
+        {
+            return answerRecordSprites_Array[0];
+        }
     }
 
-    private string ShowPrefix(int OptionNumber)
+    public Color SetColorForAnserRecords(int index)
     {
-        switch (OptionNumber)
+        if (dataFromLastStoryGamePlay.answerRecords_Array[index])
         {
-            case 0:
-                return "(A)";
-            case 1:
-                return "(B)";
-            case 2:
-                return "(C)";
-            case 3:
-                return "(D)";
-            default:
-                return "(未作答)";
+            return new Color(1, 0.8061391f, 0.03301889f, 1);
         }
+        else
+        {
+            return new Color(1, 0.03137255f, 0.6769125f, 1);
+        }
+    }
+
+    public void ChangeFavorites(int questionIndex)
+    {
+
+        if (favoriteImages_Array[questionIndex].sprite == heartSprites_Array[0])
+        {
+            favoriteImages_Array[questionIndex].sprite = heartSprites_Array[1];
+        }
+        else
+        {
+            favoriteImages_Array[questionIndex].sprite = heartSprites_Array[0];
+        }
+        
     }
 }
