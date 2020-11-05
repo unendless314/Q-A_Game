@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using UnityEngine.UI;
 using UnityEngine;
 
-//答題紀錄沒有叉叉用疊圖，減命時愛心用虛線表示
-
 public class StoryGamePlay : MonoBehaviour
 {
     public int score;   //目前用不到
@@ -33,9 +31,9 @@ public class StoryGamePlay : MonoBehaviour
     public Text questionContentsText;
     public Text[] optionContentsText_Array;
     public Slider timeSlider;
-    public GameObject[] heartImagesObj;
-    public RawImage[] checkRawImages;
-    public Texture[] iconTextures;
+    public RawImage[] heartRawImage_Array;
+    public Texture[] heartImageTexture_Array;    //
+    public RawImage[] checkRawImage_Array;
 
     public GameObject correctObj;
     public GameObject incorrectObj;
@@ -100,9 +98,14 @@ public class StoryGamePlay : MonoBehaviour
 
         timeSlider.value = 1;
 
-        for (int i = 0; i < checkRawImages.Length; i++)
+        for (int i = 0; i < 3; i++)
         {
-            checkRawImages[i].texture = iconTextures[0];
+            heartRawImage_Array[i].texture = heartImageTexture_Array[1];
+        }
+
+        for (int i = 0; i < checkRawImage_Array.Length; i++)
+        {
+            checkRawImage_Array[i].enabled = false;
         }
 
         ///
@@ -217,28 +220,22 @@ public class StoryGamePlay : MonoBehaviour
 
         for (int i = 0; i < 3; i++)
         {
-            heartImagesObj[i].SetActive(false);
+            heartRawImage_Array[i].texture = heartImageTexture_Array[0];
         }
 
         for (int i = 0; i < lives; i++)
         {
-            heartImagesObj[i].SetActive(true);
+            heartRawImage_Array[i].texture = heartImageTexture_Array[1];
+        }
+
+        for (int i = 0; i < rightAnswerTimes; i++)
+        {
+            checkRawImage_Array[i].enabled = true;
         }
 
         if (counter < 1)    //回答第一題的時候，第一題答案根本沒出來，所以不用顯示答對與否
         {
             return;
-        }
-
-        //只顯示勾勾的話，這裡要改寫
-
-        if (answerRecords_Array[counter - 1])   //從第二題開始，更新上一題的回答結果
-        {
-            checkRawImages[counter - 1].texture = iconTextures[1];
-        }
-        else
-        {
-            checkRawImages[counter - 1].texture = iconTextures[2];
         }
     }
 
