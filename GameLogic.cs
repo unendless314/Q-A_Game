@@ -247,6 +247,15 @@ public class StoryGamePlay : MonoBehaviour
         {
             return;
         }
+        else
+        {
+            for (int i = 0; i < optionBtnImage_Array.Length; i++)
+            {
+                optionBtnImage_Array[i].color = new Color(0.3396226f, 0.2685777f, 0.257921f, 0.6f);
+            }
+
+            optionBtnImage_Array[answerNumbers_Array[counter - 1]].color = new Color(0.9811321f, 0.6248419f, 0.01388392f); 
+        }
     }
 
 
@@ -270,6 +279,11 @@ public class StoryGamePlay : MonoBehaviour
         }
 
         yield return new WaitForSeconds(waitTime);
+
+        for (int i = 0; i < optionBtnImage_Array.Length; i++)
+        {
+            optionBtnImage_Array[i].color = new Color(0.9622642f, 0.3850217f, 0.2950338f);
+        }
 
         correctObj.SetActive(false);
         incorrectObj.SetActive(false);
