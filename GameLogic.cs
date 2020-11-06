@@ -41,10 +41,12 @@ public class StoryGamePlay : MonoBehaviour
 
     public GameObject result_AObject;
     public GameObject result_BObject;
-    public GameObject readAgainObj;
+    //public GameObject readAgainObj;
+
+    public Animator anim;
     
     void Start()
-    {
+    { 
         UpdateUI(currentQuestionNumber);
     }
 
@@ -449,6 +451,7 @@ public class StoryGamePlay : MonoBehaviour
         if (choiceNumbers_Array[currentQuestionNumber] == answerNumbers_Array[counter])
         {
             correctObj.SetActive(true);
+            //anim.SetTrigger("Correct"); animator 動畫失敗
             //Debug.Log("回答正確");
 
             ScoreBoard.AnswerRight(100, currentQuestionNumber);
@@ -458,6 +461,7 @@ public class StoryGamePlay : MonoBehaviour
         else
         {
             incorrectObj.SetActive(true);
+            //anim.SetTrigger("Incorrect"); animator 動畫失敗
             //Debug.Log("回答錯誤");
 
             ScoreBoard.AnswerWrong(100);
