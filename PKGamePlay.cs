@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine.UI;
@@ -51,10 +51,10 @@ public class PKGamePlay : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        Initialize();
-        SetQuestionIndexes();
-        SetQuestions();
-        UpdateUI();
+        //Initialize();
+        //SetQuestionIndexes();
+        //SetQuestions();
+        //UpdateUI();
     }
 
     // Update is called once per frame
@@ -222,17 +222,17 @@ public class PKGamePlay : MonoBehaviour
 
     private void SetOptionContents()
     {
-        optionContents_Array[0] = questions_Array[currentQuestionNumber].s_Option1;
-        optionContents_Array[1] = questions_Array[currentQuestionNumber].s_Option2;
-        optionContents_Array[2] = questions_Array[currentQuestionNumber].s_Option3;
-        optionContents_Array[3] = questions_Array[currentQuestionNumber].s_Answer;
-
-        for (int i = 0; i < optionNumbers - 1; i++)
+        optionContents_Array[0] = questions_Array[currentQuestionNumber].s_Answer;
+        optionContents_Array[1] = questions_Array[currentQuestionNumber].s_Option1;
+        optionContents_Array[2] = questions_Array[currentQuestionNumber].s_Option2;
+        optionContents_Array[3] = questions_Array[currentQuestionNumber].s_Option3;
+        
+        for (int i = 1; i < optionNumbers; i++)
         {
-            optionOrder_Array[0] = false;
+            optionOrder_Array[i] = false;
         }
 
-        optionOrder_Array[optionNumbers - 1] = true;
+        optionOrder_Array[0] = true;
     }
 
     public void Permutation()
