@@ -18,9 +18,9 @@ public class PKGamePlay : MonoBehaviour
     public float timeRemaing;
     public bool startCountDown;
 
-    public float[] seconds_Array;
-    public bool[] answerRecords_Array;
-    public int[] choiceNumbers_Array;
+    public float[] playerSeconds_Array;
+    public bool[] playerAnswerRecords_Array;
+    public int[] playerChoiceNumbers_Array;
     public int[] answerNumbers_Array;
 
     public float[] aISeconds_Array;
@@ -75,10 +75,10 @@ public class PKGamePlay : MonoBehaviour
 
             if (currentQuestionNumber < questionNumbers)    //題數 index 小於問題總數，且計時開始才算時間
             {
-                seconds_Array[currentQuestionNumber] += Time.deltaTime;
+                playerSeconds_Array[currentQuestionNumber] += Time.deltaTime;
                 aISeconds_Array[currentQuestionNumber] += Time.deltaTime;
 
-                timeRemaing = timeLimit - seconds_Array[currentQuestionNumber];
+                timeRemaing = timeLimit - playerSeconds_Array[currentQuestionNumber];
 
                 if (timeRemaing > 0)
                 {
@@ -117,10 +117,10 @@ public class PKGamePlay : MonoBehaviour
         questionIDs_Array = new int[questionNumbers];
         questions_Array = new Question1[questionNumbers];
 
-        choiceNumbers_Array = new int[questionNumbers];
+        playerChoiceNumbers_Array = new int[questionNumbers];
         answerNumbers_Array = new int[questionNumbers];
-        answerRecords_Array = new bool[questionNumbers];
-        seconds_Array = new float[questionNumbers];
+        playerAnswerRecords_Array = new bool[questionNumbers];
+        playerSeconds_Array = new float[questionNumbers];
 
         aISeconds_Array = new float[questionNumbers];
         aIAnswerRecords_Array = new bool[questionNumbers];
@@ -130,9 +130,9 @@ public class PKGamePlay : MonoBehaviour
         optionOrder_Array = new bool[optionNumbers];
 
 
-        for (int i = 0; i < choiceNumbers_Array.Length; i++)
+        for (int i = 0; i < playerChoiceNumbers_Array.Length; i++)
         {
-            choiceNumbers_Array[i] = 100;
+            playerChoiceNumbers_Array[i] = 100;
             aIChoiceNumbers_Array[i] = 100;
         }
 
@@ -338,9 +338,9 @@ public class PKGamePlay : MonoBehaviour
         }
         else
         {
-            if (startCountDown == true && choiceNumbers_Array[currentQuestionNumber] == 100) //倒數計時過程中才能選取答案
-            { 
-                choiceNumbers_Array[currentQuestionNumber] = chooseNumber;
+            if (startCountDown == true && playerChoiceNumbers_Array[currentQuestionNumber] == 100) //倒數計時過程中才能選取答案
+            {
+                playerChoiceNumbers_Array[currentQuestionNumber] = chooseNumber;
                 CheckAnswer("thisIsPlayer");
             }
         }
@@ -389,12 +389,12 @@ public class PKGamePlay : MonoBehaviour
 
             case "thisIsPlayer":
 
-                if (choiceNumbers_Array[currentQuestionNumber] == answerNumbers_Array[currentQuestionNumber])
+                if (playerChoiceNumbers_Array[currentQuestionNumber] == answerNumbers_Array[currentQuestionNumber])
                 {
                     correctObj.SetActive(true);
                     Debug.Log("玩家答對");
 
-                    answerRecords_Array[currentQuestionNumber] = true;
+                    playerAnswerRecords_Array[currentQuestionNumber] = true;
                     playerFeverCounter += 1;
 
                     CalculateScore(whoAreYou, true, timeRemaing, playerFeverCounter);
@@ -467,7 +467,7 @@ public class PKGamePlay : MonoBehaviour
             return false;
         }
 
-        if (choiceNumbers_Array[currentQuestionNumber] == 100)
+        if (playerChoiceNumbers_Array[currentQuestionNumber] == 100)
         {
             return false;
         }
