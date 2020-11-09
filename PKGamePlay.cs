@@ -17,6 +17,7 @@ public class PKGamePlay : MonoBehaviour
     public float timeLimit;
     public float timeRemaing;
     public bool startCountDown;
+
     public float[] seconds_Array;
     public bool[] answerRecords_Array;
     public int[] choiceNumbers_Array;
@@ -153,18 +154,18 @@ public class PKGamePlay : MonoBehaviour
     {
         if (questionNumbers > databaseQuestionNumbers)  //題數必須要大於題庫數量，避免底下 while 迴圈出包
         {
-            return;
+            questionNumbers = databaseQuestionNumbers;
         }
 
         for (int i = 0; i < questionNumbers; i++)
         {
-            int randomQuestionIndex = ((int)UnityEngine.Random.Range(0, databaseQuestionNumbers)) % databaseQuestionNumbers;
+            int randomQuestionIndex = Random.Range(0, databaseQuestionNumbers) % databaseQuestionNumbers;
 
             for (int j = 0; j < i; j++)
             {
                 while (questionIDs_Array[j] == JsonDataManager.Singleton.processedList[randomQuestionIndex].i_id)
                 {
-                    randomQuestionIndex = (int)UnityEngine.Random.Range(0, databaseQuestionNumbers) % databaseQuestionNumbers;
+                    randomQuestionIndex = Random.Range(0, databaseQuestionNumbers) % databaseQuestionNumbers;
                     j = 0;
                 }
             }
@@ -180,7 +181,6 @@ public class PKGamePlay : MonoBehaviour
             questions_Array[i] = JsonDataManager.Singleton.processedList.Find((Question1 obj) => obj.i_id == questionIDs_Array[i]);
         }
     }
-
 
     public void UpdateUI()
     {
@@ -209,10 +209,35 @@ public class PKGamePlay : MonoBehaviour
             optionBtnImage_Array[i].color = new Color(0.9622642f, 0.3850217f, 0.2950338f);
         }
 
+        for (int i = 0; i < currentQuestionNumber; i++)
+        {
+
+        }
+
         correctObj.SetActive(false);
         incorrectObj.SetActive(false);
         readAgainBtn.SetActive(true);
+        ResetToggles();
 
+    }
+
+    public void ResetToggles()
+    {
+        for (int i = 0; i < questionNumbers; i++)
+        {
+            if (checkRawImage_Array.Length <= questionNumbers)
+            {
+                checkRawImage_Array[i].enabled = false;
+            }
+        }
+
+        for (int i = 0; i < currentQuestionNumber; i++)
+        {
+            if (checkRawImage_Array.Length <= questionNumbers)
+            {
+                checkRawImage_Array[i].enabled = true;
+            }
+        }
     }
 
     public void ShowQuestion()
@@ -248,7 +273,7 @@ public class PKGamePlay : MonoBehaviour
 
         while (optionListA.Count > 0)
         {
-            int randomIndex = ((int)UnityEngine.Random.Range(0, optionListA.Count)) % optionListA.Count;
+            int randomIndex = Random.Range(0, optionListA.Count) % optionListA.Count;
             optionListB.Add(optionListA[randomIndex]);
             optionOrderB.Add(optionOrderA[randomIndex]);
 
@@ -310,11 +335,10 @@ public class PKGamePlay : MonoBehaviour
     {
         if (currentQuestionNumber == questionNumbers)
         {
-            //遊戲結束後即不可再按按鈕
         }
         else
         {
-            if (startCountDown == true) //倒數計時過程中才能選取答案
+            if (startCountDown == true && choiceNumbers_Array[currentQuestionNumber] == 100) //倒數計時過程中才能選取答案
             { 
                 choiceNumbers_Array[currentQuestionNumber] = chooseNumber;
                 CheckAnswer("thisIsPlayer");
@@ -327,7 +351,6 @@ public class PKGamePlay : MonoBehaviour
     {
         if (currentQuestionNumber == questionNumbers)
         {
-            //遊戲結束電腦就不會再選
         }
         else
         {
@@ -347,7 +370,6 @@ public class PKGamePlay : MonoBehaviour
 
                 if (aIChoiceNumbers_Array[currentQuestionNumber] == answerNumbers_Array[currentQuestionNumber])
                 {
-                    //correctObj.SetActive(true);
                     Debug.Log("AI 答對");
 
                     aIAnswerRecords_Array[currentQuestionNumber] = true;
@@ -357,7 +379,6 @@ public class PKGamePlay : MonoBehaviour
                 }
                 else
                 {
-                    //incorrectObj.SetActive(true);
                     Debug.Log("AI 答錯");
 
                     aIAnswerRecords_Array[currentQuestionNumber] = false;
@@ -390,18 +411,18 @@ public class PKGamePlay : MonoBehaviour
                     wrongAnswerTimes += 1;
                 }
 
-
-
+                ShowAnswer();
                 break;
 
             default:
                 break;
         }
 
+        ShowScore();
+
         if (everyoneHasAnswered())
         {
             startCountDown = false;
-            ShowAnswer();
 
             currentQuestionNumber = rightAnswerTimes + wrongAnswerTimes;
             ShowNextQuestionOrEndGame();
@@ -418,21 +439,25 @@ public class PKGamePlay : MonoBehaviour
                     aIScore += 100 + (int)(timeRemaing * 10) + feverCounter * 15;  //這裡還要改
                 }
 
-                aIScoreText.text = "AI 得分: " + aIScore.ToString();
                 break;
 
-            case "thisIsHuman":
+            case "thisIsPlayer":
                 if (rightAnswer)
                 {
-                    playerScore += 100 + (int)(timeRemaing * 10) + feverCounter * 15;
+                    playerScore += 100 + (int)(timeRemaing * 10) + feverCounter * 15;   //這裡還要改
                 }
 
-                playerScoreText.text = "玩家得分: " + playerScore.ToString();
                 break;
 
             default:
                 break;
         }
+    }
+
+    public void ShowScore()
+    {
+        aIScoreText.text = "AI 得分: " + aIScore.ToString();
+        playerScoreText.text = "玩家得分: " + playerScore.ToString();
     }
 
     public bool everyoneHasAnswered()
@@ -442,7 +467,7 @@ public class PKGamePlay : MonoBehaviour
             return false;
         }
 
-        if (choiceNumbers_Array[currentQuestionNumber] == 100)///////
+        if (choiceNumbers_Array[currentQuestionNumber] == 100)
         {
             return false;
         }
@@ -488,5 +513,7 @@ public class PKGamePlay : MonoBehaviour
         {
             result_BObject.SetActive(true);
         }
+
+        ResetToggles();
     }
 }
