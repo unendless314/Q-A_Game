@@ -6,7 +6,8 @@ using UnityEngine.UI;
 
 public class Evaluation : MonoBehaviour
 {
-    public StoryGamePlay dataFromLastStoryGamePlay;
+    //public StoryGamePlay dataFromLastStoryGamePlay;
+    public PKGamePlay dataFromLastPKGamePlay;
 
     public Question1[] questions_Array;
     public Button[] expandButton_Array;
@@ -18,27 +19,28 @@ public class Evaluation : MonoBehaviour
     public Sprite[] heartSprites_Array;
     public Sprite[] answerRecordSprites_Array;
 
-    void Start()
-    {
-
-    }
-
     public void Initialze()
     {
-        questions_Array = new Question1[5];
+        questions_Array = new Question1[8];
 
-        for (int i = 0; i < questions_Array.Length; i++)
+        if (dataFromLastPKGamePlay.questions_Array.Length > 8)
         {
-            questions_Array[i].s_QuestionContents = dataFromLastStoryGamePlay.questions_Array[i].s_QuestionContents;
-            questions_Array[i].s_Answer = dataFromLastStoryGamePlay.questions_Array[i].s_Answer;
-            questions_Array[i].s_Option1 = dataFromLastStoryGamePlay.questions_Array[i].s_Option1;
-            questions_Array[i].s_Option2 = dataFromLastStoryGamePlay.questions_Array[i].s_Option2;
-            questions_Array[i].s_Option3 = dataFromLastStoryGamePlay.questions_Array[i].s_Option3;
+            Debug.Log("題目數量超過可顯示上限");
+            return;
         }
 
         for (int i = 0; i < questions_Array.Length; i++)
         {
-            questionContents_Array[i].text = "題目: " + questions_Array[i].s_QuestionContents;
+            questions_Array[i].s_QuestionContents = dataFromLastPKGamePlay.questions_Array[i].s_QuestionContents;
+            questions_Array[i].s_Answer = dataFromLastPKGamePlay.questions_Array[i].s_Answer;
+            questions_Array[i].s_Option1 = dataFromLastPKGamePlay.questions_Array[i].s_Option1;
+            questions_Array[i].s_Option2 = dataFromLastPKGamePlay.questions_Array[i].s_Option2;
+            questions_Array[i].s_Option3 = dataFromLastPKGamePlay.questions_Array[i].s_Option3;
+        }
+
+        for (int i = 0; i < questions_Array.Length; i++)
+        {
+            questionContents_Array[i].text = "題目" + (i + 1).ToString() + ": " + questions_Array[i].s_QuestionContents;
 
             optionContents_Array[i].text = "Q. " + questions_Array[i].s_QuestionContents + "\n" + "\n" +
             "A. " + questions_Array[i].s_Answer + "\n" +
@@ -50,13 +52,13 @@ public class Evaluation : MonoBehaviour
         for (int i = 0; i < questions_Array.Length; i++)
         {
             answerRecordImages_Array[i].sprite = SetSpriteForAnswerRecords(i);
-            answerRecordImages_Array[i].color = SetColorForAnserRecords(i);
+            answerRecordImages_Array[i].color = SetColorForAnswerRecords(i);
         }
     }
 
     public Sprite SetSpriteForAnswerRecords(int index)
     {
-        if (dataFromLastStoryGamePlay.answerRecords_Array[index])
+        if (dataFromLastPKGamePlay.playerAnswerRecords_Array[index])
         {
             return answerRecordSprites_Array[1];
         }
@@ -66,9 +68,9 @@ public class Evaluation : MonoBehaviour
         }
     }
 
-    public Color SetColorForAnserRecords(int index)
+    public Color SetColorForAnswerRecords(int index)
     {
-        if (dataFromLastStoryGamePlay.answerRecords_Array[index])
+        if (dataFromLastPKGamePlay.playerAnswerRecords_Array[index])
         {
             return new Color(1, 0.8061391f, 0.03301889f, 1);
         }
@@ -80,7 +82,6 @@ public class Evaluation : MonoBehaviour
 
     public void ChangeFavorites(int questionIndex)
     {
-
         if (favoriteImages_Array[questionIndex].sprite == heartSprites_Array[0])
         {
             favoriteImages_Array[questionIndex].sprite = heartSprites_Array[1];
@@ -89,6 +90,5 @@ public class Evaluation : MonoBehaviour
         {
             favoriteImages_Array[questionIndex].sprite = heartSprites_Array[0];
         }
-        
     }
 }
