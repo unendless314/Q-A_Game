@@ -1,0 +1,492 @@
+﻿using System.Collections;
+using System.Linq;
+using System.Collections.Generic;
+using UnityEngine.UI;
+using UnityEngine;
+
+public class PKGamePlay : MonoBehaviour
+{
+    public int playerScore;
+    public int aIScore;
+    public int questionNumbers;
+    public int optionNumbers;
+    public int wrongAnswerTimes;
+    public int rightAnswerTimes;
+    public int playerFeverCounter;
+    public int aIFeverCounter;
+    public float timeLimit;
+    public float timeRemaing;
+    public bool startCountDown;
+    public float[] seconds_Array;
+    public bool[] answerRecords_Array;
+    public int[] choiceNumbers_Array;
+    public int[] answerNumbers_Array;
+
+    public float[] aISeconds_Array;
+    public bool[] aIAnswerRecords_Array;
+    public int[] aIChoiceNumbers_Array;
+
+    public int databaseQuestionNumbers; //資料庫的題目總數
+    public int currentQuestionNumber;   //這個是 question array 的 index 不是真正的題號
+    public int[] questionIDs_Array;
+    public string[] optionContents_Array;
+    public bool[] optionOrder_Array;
+
+    public Question1[] questions_Array;
+    public Text questionContentsText;
+    public Text[] optionContentsText_Array;
+    public Slider timeSlider;
+    public RawImage[] checkRawImage_Array;
+    public Image[] optionBtnImage_Array;
+    public Text playerScoreText;
+    public Text aIScoreText;
+
+    public GameObject correctObj;
+    public GameObject incorrectObj;
+    public GameObject result_AObject;
+    public GameObject result_BObject;
+    public GameObject readAgainBtn;
+
+
+    // Start is called before the first frame update
+    void Start()
+    {
+        Initialize();
+        SetQuestionIndexes();
+        SetQuestions();
+        UpdateUI();
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        if (currentQuestionNumber == questionNumbers)
+        {
+
+        }
+        else
+        {
+            if (startCountDown == false)
+            {
+
+            }
+            else
+
+            if (currentQuestionNumber < questionNumbers)    //題數 index 小於問題總數，且計時開始才算時間
+            {
+                seconds_Array[currentQuestionNumber] += Time.deltaTime;
+                aISeconds_Array[currentQuestionNumber] += Time.deltaTime;
+
+                timeRemaing = timeLimit - seconds_Array[currentQuestionNumber];
+
+                if (timeRemaing > 0)
+                {
+                    timeSlider.value = timeRemaing / timeLimit;
+                }
+
+                if (timeRemaing < 7)    //我時間寫死了
+                {
+                    if (aIChoiceNumbers_Array[currentQuestionNumber] == 100)
+                    {
+                        MakeAIChoice();
+                    }
+                }
+
+                if (timeRemaing <= 0)
+                {
+                    MakePlayerChoice(99);
+                }
+            }
+        }
+    }
+
+    public void Initialize()
+    {
+        playerScore = 0;
+        aIScore = 0;
+        wrongAnswerTimes = 0;
+        rightAnswerTimes = 0;
+        currentQuestionNumber = wrongAnswerTimes + rightAnswerTimes;
+        playerFeverCounter = 0;
+        aIFeverCounter = 0;
+        startCountDown = false;
+        databaseQuestionNumbers = JsonDataManager.Singleton.processedList.Count;
+
+
+        questionIDs_Array = new int[questionNumbers];
+        questions_Array = new Question1[questionNumbers];
+
+        choiceNumbers_Array = new int[questionNumbers];
+        answerNumbers_Array = new int[questionNumbers];
+        answerRecords_Array = new bool[questionNumbers];
+        seconds_Array = new float[questionNumbers];
+
+        aISeconds_Array = new float[questionNumbers];
+        aIAnswerRecords_Array = new bool[questionNumbers];
+        aIChoiceNumbers_Array = new int[questionNumbers];
+
+        optionContents_Array = new string[optionNumbers];
+        optionOrder_Array = new bool[optionNumbers];
+
+
+        for (int i = 0; i < choiceNumbers_Array.Length; i++)
+        {
+            choiceNumbers_Array[i] = 100;
+            aIChoiceNumbers_Array[i] = 100;
+        }
+
+        questionContentsText.text = "";
+        for (int i = 0; i < optionContentsText_Array.Length; i++)
+        {
+            optionContentsText_Array[i].text = "";
+        }
+
+        timeSlider.value = 1;
+
+        for (int i = 0; i < checkRawImage_Array.Length; i++)
+        {
+            checkRawImage_Array[i].enabled = false;
+        }
+    }
+
+    public void SetQuestionIndexes()
+    {
+        if (questionNumbers > databaseQuestionNumbers)  //題數必須要大於題庫數量，避免底下 while 迴圈出包
+        {
+            return;
+        }
+
+        for (int i = 0; i < questionNumbers; i++)
+        {
+            int randomQuestionIndex = ((int)UnityEngine.Random.Range(0, databaseQuestionNumbers)) % databaseQuestionNumbers;
+
+            for (int j = 0; j < i; j++)
+            {
+                while (questionIDs_Array[j] == JsonDataManager.Singleton.processedList[randomQuestionIndex].i_id)
+                {
+                    randomQuestionIndex = (int)UnityEngine.Random.Range(0, databaseQuestionNumbers) % databaseQuestionNumbers;
+                    j = 0;
+                }
+            }
+
+            questionIDs_Array[i] = JsonDataManager.Singleton.processedList[randomQuestionIndex].i_id;
+        }
+    }
+
+    public void SetQuestions()
+    {
+        for (int i = 0; i < questionIDs_Array.Length; i++)
+        {
+            questions_Array[i] = JsonDataManager.Singleton.processedList.Find((Question1 obj) => obj.i_id == questionIDs_Array[i]);
+        }
+    }
+
+
+    public void UpdateUI()
+    {
+        IEnumerator coroutine = ShowNextPage();
+        StartCoroutine(coroutine);
+    }
+
+    public IEnumerator ShowNextPage()
+    {
+        float waitTime = 2;
+        yield return new WaitForSeconds(waitTime);
+
+        ResetUIComponents();
+        ShowQuestion();
+        SetOptionContents();
+        Permutation();
+        FindAnswerNumber();
+        ShowOptions();
+        startCountDown = true;
+    }
+
+    public void ResetUIComponents()
+    {
+        for (int i = 0; i < optionBtnImage_Array.Length; i++)
+        {
+            optionBtnImage_Array[i].color = new Color(0.9622642f, 0.3850217f, 0.2950338f);
+        }
+
+        correctObj.SetActive(false);
+        incorrectObj.SetActive(false);
+        readAgainBtn.SetActive(true);
+
+    }
+
+    public void ShowQuestion()
+    {
+        questionContentsText.text = "問題" + (currentQuestionNumber + 1).ToString() + ": " + questions_Array[currentQuestionNumber].s_QuestionContents;
+    }
+
+    private void SetOptionContents()
+    {
+        optionContents_Array[0] = questions_Array[currentQuestionNumber].s_Option1;
+        optionContents_Array[1] = questions_Array[currentQuestionNumber].s_Option2;
+        optionContents_Array[2] = questions_Array[currentQuestionNumber].s_Option3;
+        optionContents_Array[3] = questions_Array[currentQuestionNumber].s_Answer;
+
+        for (int i = 0; i < optionNumbers - 1; i++)
+        {
+            optionOrder_Array[0] = false;
+        }
+
+        optionOrder_Array[optionNumbers - 1] = true;
+    }
+
+    public void Permutation()
+    {
+        List<string> optionListA = new List<string>();
+        List<string> optionListB = new List<string>();
+
+        List<bool> optionOrderA = new List<bool>();
+        List<bool> optionOrderB = new List<bool>();
+
+        optionListA = optionContents_Array.ToList();
+        optionOrderA = optionOrder_Array.ToList();
+
+        while (optionListA.Count > 0)
+        {
+            int randomIndex = ((int)UnityEngine.Random.Range(0, optionListA.Count)) % optionListA.Count;
+            optionListB.Add(optionListA[randomIndex]);
+            optionOrderB.Add(optionOrderA[randomIndex]);
+
+            optionListA.Remove(optionListA[randomIndex]);
+            optionOrderA.Remove(optionOrderA[randomIndex]);
+        }
+
+        optionContents_Array = optionListB.ToArray();
+        optionOrder_Array = optionOrderB.ToArray();
+
+        questions_Array[currentQuestionNumber].s_Answer = optionContents_Array[0];
+        questions_Array[currentQuestionNumber].s_Option1 = optionContents_Array[1];
+        questions_Array[currentQuestionNumber].s_Option2 = optionContents_Array[2];
+        questions_Array[currentQuestionNumber].s_Option3 = optionContents_Array[3];
+    }
+
+    public void FindAnswerNumber()
+    {
+        int answerNumber = -1;  //答案 -1 不存在
+
+        for (int i = 0; i < optionOrder_Array.Length; i++) //跑完迴圈以後，答案編號就存起來了
+        {
+            if (optionOrder_Array[i] == true)
+            {
+                answerNumber = i;
+                break;
+            }
+        }
+
+        answerNumbers_Array[currentQuestionNumber] = answerNumber;
+    }
+
+    public void ShowOptions()   //這裡隱含寫死只有 4 選項
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            optionContentsText_Array[i].text = AddPrefix(i) + optionContents_Array[i];
+        }
+    }
+
+    public string AddPrefix(int i) //選項加開頭字串
+    {
+        switch (i)
+        {
+            case 0:
+                return "(A) ";
+            case 1:
+                return "(B) ";
+            case 2:
+                return "(C) ";
+            case 3:
+                return "(D) ";
+            default:
+                return "(隱藏選項) ";
+        }
+    }
+
+    public void MakePlayerChoice(int chooseNumber)
+    {
+        if (currentQuestionNumber == questionNumbers)
+        {
+            //遊戲結束後即不可再按按鈕
+        }
+        else
+        {
+            if (startCountDown == true) //倒數計時過程中才能選取答案
+            { 
+                choiceNumbers_Array[currentQuestionNumber] = chooseNumber;
+                CheckAnswer("thisIsPlayer");
+            }
+        }
+    }
+    
+
+    public void MakeAIChoice()
+    {
+        if (currentQuestionNumber == questionNumbers)
+        {
+            //遊戲結束電腦就不會再選
+        }
+        else
+        {
+            if (startCountDown == true) //倒數計時過程中才能選取答案
+            {
+                aIChoiceNumbers_Array[currentQuestionNumber] = Random.Range(0, optionNumbers);
+                CheckAnswer("thisIsAI");
+            }
+        }
+    }
+
+    public void CheckAnswer(string whoAreYou)
+    {
+        switch (whoAreYou)
+        {
+            case "thisIsAI":
+
+                if (aIChoiceNumbers_Array[currentQuestionNumber] == answerNumbers_Array[currentQuestionNumber])
+                {
+                    //correctObj.SetActive(true);
+                    Debug.Log("AI 答對");
+
+                    aIAnswerRecords_Array[currentQuestionNumber] = true;
+                    aIFeverCounter += 1;
+
+                    CalculateScore(whoAreYou, true, timeRemaing, aIFeverCounter);
+                }
+                else
+                {
+                    //incorrectObj.SetActive(true);
+                    Debug.Log("AI 答錯");
+
+                    aIAnswerRecords_Array[currentQuestionNumber] = false;
+                    aIFeverCounter = 0;
+                }
+
+                break;
+
+            case "thisIsPlayer":
+
+                if (choiceNumbers_Array[currentQuestionNumber] == answerNumbers_Array[currentQuestionNumber])
+                {
+                    correctObj.SetActive(true);
+                    Debug.Log("玩家答對");
+
+                    answerRecords_Array[currentQuestionNumber] = true;
+                    playerFeverCounter += 1;
+
+                    CalculateScore(whoAreYou, true, timeRemaing, playerFeverCounter);
+                    rightAnswerTimes += 1;
+                }
+                else
+                {
+                    incorrectObj.SetActive(true);
+                    Debug.Log("玩家答錯");
+
+                    aIAnswerRecords_Array[currentQuestionNumber] = false;
+                    playerFeverCounter = 0;
+
+                    wrongAnswerTimes += 1;
+                }
+
+
+
+                break;
+
+            default:
+                break;
+        }
+
+        if (everyoneHasAnswered())
+        {
+            startCountDown = false;
+            ShowAnswer();
+
+            currentQuestionNumber = rightAnswerTimes + wrongAnswerTimes;
+            ShowNextQuestionOrEndGame();
+        }
+    }
+
+    public void CalculateScore(string whoAreYou, bool rightAnswer, float timeRemaing, int feverCounter)
+    {
+        switch (whoAreYou)
+        {
+            case "thisIsAI":
+                if (rightAnswer)
+                {
+                    aIScore += 100 + (int)(timeRemaing * 10) + feverCounter * 15;  //這裡還要改
+                }
+
+                aIScoreText.text = "AI 得分: " + aIScore.ToString();
+                break;
+
+            case "thisIsHuman":
+                if (rightAnswer)
+                {
+                    playerScore += 100 + (int)(timeRemaing * 10) + feverCounter * 15;
+                }
+
+                playerScoreText.text = "玩家得分: " + playerScore.ToString();
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    public bool everyoneHasAnswered()
+    {
+        if (aIChoiceNumbers_Array[currentQuestionNumber] == 100)
+        {
+            return false;
+        }
+
+        if (choiceNumbers_Array[currentQuestionNumber] == 100)///////
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    public void ShowAnswer()
+    {
+        readAgainBtn.SetActive(false);
+
+        for (int i = 0; i < optionBtnImage_Array.Length; i++)
+        {
+            optionBtnImage_Array[i].color = new Color(0.3396226f, 0.2685777f, 0.257921f, 0.6f);
+        }
+
+        optionBtnImage_Array[answerNumbers_Array[currentQuestionNumber]].color = new Color(0.9811321f, 0.6248419f, 0.01388392f);
+    }
+
+    public void ShowNextQuestionOrEndGame()
+    {
+        if (currentQuestionNumber == questionNumbers)
+        {
+            IEnumerator coroutine = ShowGameResult();
+            StartCoroutine(coroutine);
+        }
+        else
+        {
+            UpdateUI();
+        }
+    }
+
+    public IEnumerator ShowGameResult()
+    {
+        float waitTime = 2;
+        yield return new WaitForSeconds(waitTime);
+
+        if (rightAnswerTimes >= 4)
+        {
+            result_AObject.SetActive(true);
+        }
+        else
+        {
+            result_BObject.SetActive(true);
+        }
+    }
+}
