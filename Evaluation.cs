@@ -55,7 +55,7 @@ public class Evaluation : MonoBehaviour
             return;
         }
 
-        for (int i = 0; i < questions_Array.Length; i++)
+        for (int i = 0; i < lastStoryGamePlay.questions_Array.Length; i++)
         {
             questions_Array[i].i_id = lastStoryGamePlay.questions_Array[i].i_id;
             questions_Array[i].i_Grade = lastStoryGamePlay.questions_Array[i].i_Grade;
@@ -69,7 +69,7 @@ public class Evaluation : MonoBehaviour
             questions_Array[i].s_Option3 = lastStoryGamePlay.questions_Array[i].s_Option3;
         }
 
-        for (int i = 0; i < questions_Array.Length; i++)
+        for (int i = 0; i < lastStoryGamePlay.questions_Array.Length; i++)
         {
             questionContents_Array[i].text = "題目" + (i + 1).ToString() + ": " + questions_Array[i].s_QuestionContents;
 
@@ -80,7 +80,7 @@ public class Evaluation : MonoBehaviour
             "D. " + questions_Array[i].s_Option3;
         }
 
-        for (int i = 0; i < questions_Array.Length; i++)
+        for (int i = 0; i < lastStoryGamePlay.questions_Array.Length; i++)
         {
             answerRecordImages_Array[i].sprite = SetSpriteForStoryAnswerRecords(i);
             answerRecordImages_Array[i].color = SetColorForStoryAnswerRecords(i);
@@ -97,7 +97,7 @@ public class Evaluation : MonoBehaviour
             return;
         }
 
-        for (int i = 0; i < questions_Array.Length; i++)
+        for (int i = 0; i < lastPKGamePlay.questions_Array.Length; i++)
         {
             questions_Array[i].i_id = lastPKGamePlay.questions_Array[i].i_id;
             questions_Array[i].i_Grade = lastPKGamePlay.questions_Array[i].i_Grade;
@@ -111,7 +111,7 @@ public class Evaluation : MonoBehaviour
             questions_Array[i].s_Option3 = lastPKGamePlay.questions_Array[i].s_Option3;
         }
 
-        for (int i = 0; i < questions_Array.Length; i++)
+        for (int i = 0; i < lastPKGamePlay.questions_Array.Length; i++)
         {
             questionContents_Array[i].text = "題目" + (i + 1).ToString() + ": " + questions_Array[i].s_QuestionContents;
 
@@ -122,7 +122,7 @@ public class Evaluation : MonoBehaviour
             "D. " + questions_Array[i].s_Option3;
         }
 
-        for (int i = 0; i < questions_Array.Length; i++)
+        for (int i = 0; i < lastPKGamePlay.questions_Array.Length; i++)
         {
             answerRecordImages_Array[i].sprite = SetSpriteForPKAnswerRecords(i);
             answerRecordImages_Array[i].color = SetColorForPKAnswerRecords(i);
