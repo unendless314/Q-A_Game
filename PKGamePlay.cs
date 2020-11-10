@@ -405,7 +405,7 @@ public class PKGamePlay : MonoBehaviour
                     incorrectObj.SetActive(true);
                     Debug.Log("玩家答錯");
 
-                    aIAnswerRecords_Array[currentQuestionNumber] = false;
+                    playerAnswerRecords_Array[currentQuestionNumber] = false;
                     playerFeverCounter = 0;
 
                     wrongAnswerTimes += 1;
