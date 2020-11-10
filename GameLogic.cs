@@ -1,24 +1,24 @@
 using System.Collections;
+using System.Linq;
 using System.Collections.Generic;
 using UnityEngine.UI;
 using UnityEngine;
 
+// 克漏字我需要追加題目的 scroll bar
+
 public class StoryGamePlay : MonoBehaviour
 {
-    public int score;   //目前用不到
-    public int lives;
     public int questionNumbers;
+    public int optionNumbers;
     public int wrongAnswerTimes;
     public int rightAnswerTimes;
-    public bool gameOver;
-
-    public int feverCounter;
     public float timeLimit;
-    private float timeRemaing;
+    public float timeRemaing;
     public bool startCountDown;
-    public float[] seconds_Array;
-    public bool[] answerRecords_Array;
-    public int[] choiceNumbers_Array;
+
+    public float[] playerSeconds_Array;
+    public bool[] playerAnswerRecords_Array;
+    public int[] playerChoiceNumbers_Array;
     public int[] answerNumbers_Array;
 
     public int databaseQuestionNumbers; //資料庫的題目總數
@@ -31,26 +31,25 @@ public class StoryGamePlay : MonoBehaviour
     public Text questionContentsText;
     public Text[] optionContentsText_Array;
     public Slider timeSlider;
-    public RawImage[] heartRawImage_Array;
-    public Texture[] heartImageTexture_Array;    //
+
     public RawImage[] checkRawImage_Array;
     public Image[] optionBtnImage_Array;
-
+    public RawImage[] heartRawImage_Array;
+    public Texture[] heartImageTexture_Array;
     public GameObject correctObj;
     public GameObject incorrectObj;
-
     public GameObject result_AObject;
     public GameObject result_BObject;
-    public GameObject readAgainObj;
+    public GameObject readAgainBtn;
     
     void Start()
     {
-        UpdateUI(currentQuestionNumber);
+
     }
 
     void Update()
     {
-        if (gameOver)
+        if (currentQuestionNumber == questionNumbers)
         {
 
         }
@@ -62,16 +61,20 @@ public class StoryGamePlay : MonoBehaviour
             }
             else
 
-            if (currentQuestionNumber < questionNumbers)    //題數 index 小於問題總數，且計時開始才算時間
+            if (currentQuestionNumber < questionNumbers && wrongAnswerTimes < 3)    //題數 index 小於問題總數，且計時開始才算時間
             {
-                ScoreBoard.SetSeconds(currentQuestionNumber, Time.deltaTime);
-                //timeRemaing = Mathf.Ceil(timeLimit - ScoreBoard.GetSeconds(currentQuestionNumber));
-                timeRemaing = timeLimit - ScoreBoard.GetSeconds(currentQuestionNumber);
-                timeSlider.value = (float)(timeRemaing / timeLimit);
+                playerSeconds_Array[currentQuestionNumber] += Time.deltaTime;
+
+                timeRemaing = timeLimit - playerSeconds_Array[currentQuestionNumber];
+
+                if (timeRemaing > 0)
+                {
+                    timeSlider.value = timeRemaing / timeLimit;
+                }
 
                 if (timeRemaing <= 0)
                 {
-                    MakeYourChoice(100);
+                    MakePlayerChoice(99);
                 }
             }
         }
@@ -79,15 +82,27 @@ public class StoryGamePlay : MonoBehaviour
 
     public void Initialize()
     {
-        answerRecords_Array = new bool[5];
-        answerNumbers_Array = new int[5];
-        choiceNumbers_Array = new int[] { 100, 100, 100, 100, 100 }; //new int[5]; 沒有回答的問題，都會變成選 100
-        seconds_Array = new float[5];
-        optionContents_Array = new string[4];
-        optionOrder_Array = new bool[4];
-        ///////// 以上先寫死，日後再修改優化
+        wrongAnswerTimes = 0;
+        rightAnswerTimes = 0;
+        currentQuestionNumber = wrongAnswerTimes + rightAnswerTimes;
+        startCountDown = false;
+        databaseQuestionNumbers = JsonDataManager.Singleton.processedList.Count;
 
-        /// 可以用這種寫法，但是很爛，因為 coroutine 在物件 inactive 時執行會報錯，可以用 try catch 繞過這個問題，但一樣很爛
+        questionIDs_Array = new int[questionNumbers];
+        questions_Array = new Question1[questionNumbers];
+
+        playerChoiceNumbers_Array = new int[questionNumbers];
+        answerNumbers_Array = new int[questionNumbers];
+        playerAnswerRecords_Array = new bool[questionNumbers];
+        playerSeconds_Array = new float[questionNumbers];
+
+        optionContents_Array = new string[optionNumbers];
+        optionOrder_Array = new bool[optionNumbers];
+
+        for (int i = 0; i < playerChoiceNumbers_Array.Length; i++)
+        {
+            playerChoiceNumbers_Array[i] = 100;
+        }
 
         questionContentsText.text = "";
         for (int i = 0; i < optionContentsText_Array.Length; i++)
@@ -97,99 +112,28 @@ public class StoryGamePlay : MonoBehaviour
 
         timeSlider.value = 1;
 
-        for (int i = 0; i < 3; i++)
-        {
-            heartRawImage_Array[i].texture = heartImageTexture_Array[1];
-        }
-
         for (int i = 0; i < checkRawImage_Array.Length; i++)
         {
             checkRawImage_Array[i].enabled = false;
         }
-
-        ///
-
-        ScoreBoard.Initialize(questionNumbers, 3, timeLimit);   //設定每場遊戲有幾個題目 + 幾條命 + 倒數幾秒
-
-        UpdatePlayStatus();
-        databaseQuestionNumbers = JsonDataManager.Singleton.processedList.Count; //這裏要接資料庫
-
-        SetQuestionIndexes(questionNumbers, databaseQuestionNumbers);    //獲取問題編號陣列，questionIDs 陣列初始化結束
-        SetQuestions();
-
-        /*
-         如果要動態產生選項按鈕的話，程式碼要寫在這裡
-         */
-
-        UpdateUI(currentQuestionNumber);    //這裏掛 updateUI 有致命的缺陷，就是選地圖會報錯，但是不掛就無法重複玩
     }
 
-    public void CheckIsGameOver()
+    public void SetQuestionIndexes()
     {
-        UpdatePlayStatus();
-
-        if (lives <= 0 || wrongAnswerTimes >= 3)
+        if (questionNumbers > databaseQuestionNumbers)  //題數必須要大於題庫數量，避免底下 while 迴圈出包
         {
-            ScoreBoard.SetGameover();   //計分板設定遊戲狀態為結束
-            gameOver = ScoreBoard.IsGameOver();
+            questionNumbers = databaseQuestionNumbers;
         }
-        else if (currentQuestionNumber >= questionNumbers)    //index 的計算要減 1，所以相等的時候其實表示目前題號已經超過題數上限
-        {
-            ScoreBoard.SetGameover();   //計分板設定遊戲狀態為結束
-            gameOver = ScoreBoard.IsGameOver();
-        }
-        else
-        {
-        }
-
-        if (gameOver)
-        {
-            Debug.Log("玩完了，請接下一場");
-            return;
-        }
-    }
-
-    public void UpdatePlayStatus()
-    {
-        score = ScoreBoard.GetScore();
-        lives = ScoreBoard.GetLives();
-        questionNumbers = ScoreBoard.GetQuestionNumbers();
-        wrongAnswerTimes = ScoreBoard.GetWrongAnswerTimes();
-        rightAnswerTimes = ScoreBoard.GetRightAnswerTimes();
-        gameOver = ScoreBoard.IsGameOver();
-
-        currentQuestionNumber = wrongAnswerTimes + rightAnswerTimes;    //目前在第幾題 (index)
-
-        feverCounter = ScoreBoard.GetFeverCounter();
 
         for (int i = 0; i < questionNumbers; i++)
         {
-            answerRecords_Array[i] = ScoreBoard.GetAnswerRecords(i);
-        }
-    }
-
-    public void SetQuestionIndexes(int questionNumbers, int databaseQuestionNumbers)  //預設取幾道題目，總題庫量多少題，這裏要接資料庫
-    {
-        //會需要取題目編號範圍
-        if (questionNumbers > databaseQuestionNumbers)   //笨笨的防呆?
-        {
-            Debug.Log("出題數量大於資料表題目筆數");
-            return;
-        }
-
-        questionIDs_Array = new int[questionNumbers];
-        questions_Array = new Question1[questionNumbers];
-
-        for (int i = 0; i < questionNumbers; i++)
-        {
-            // 因為極大值會超出 index 範圍，所以取餘數，讓極大值發生時視同為 0;
-            int randomQuestionIndex = ((int)UnityEngine.Random.Range(0, databaseQuestionNumbers)) % databaseQuestionNumbers;
+            int randomQuestionIndex = Random.Range(0, databaseQuestionNumbers) % databaseQuestionNumbers;
 
             for (int j = 0; j < i; j++)
             {
-                while (questionIDs_Array[j] == JsonDataManager.Singleton.processedList[randomQuestionIndex].i_id)  //題數必須要大於題庫數量，否則 while 迴圈解不了 2020/10/27
+                while (questionIDs_Array[j] == JsonDataManager.Singleton.processedList[randomQuestionIndex].i_id)
                 {
-                    randomQuestionIndex = (int)UnityEngine.Random.Range(0, databaseQuestionNumbers) % databaseQuestionNumbers;
+                    randomQuestionIndex = Random.Range(0, databaseQuestionNumbers) % databaseQuestionNumbers;
                     j = 0;
                 }
             }
@@ -198,7 +142,7 @@ public class StoryGamePlay : MonoBehaviour
         }
     }
 
-    public void SetQuestions()     //設定題目內容
+    public void SetQuestions()
     {
         for (int i = 0; i < questionIDs_Array.Length; i++)
         {
@@ -206,80 +150,28 @@ public class StoryGamePlay : MonoBehaviour
         }
     }
 
-    public void UpdateUI(int counter)
+    public void UpdateUI()
     {
-        ShowToggles(counter);
-
-        //即使寫 try catch 還是會報錯
-
-        try
-        {
-            IEnumerator coroutine = ShowNextPage(counter);
-            StartCoroutine(coroutine);
-        }
-        catch (System.Exception ex)
-        {
-            Debug.Log(ex + " 例外錯誤阻止了遊戲開始");
-        }
+        IEnumerator coroutine = ShowNextPage();
+        StartCoroutine(coroutine);
     }
 
-    public void ShowToggles(int counter)   //性質不一樣，答 1 題才更新 1 題
+    public IEnumerator ShowNextPage()
     {
-
-        ////// 有點爛的寫法，先把所有的愛心關掉，再根據目前生命數量把愛心開起來
-
-        for (int i = 0; i < 3; i++)
-        {
-            heartRawImage_Array[i].texture = heartImageTexture_Array[0];
-        }
-
-        for (int i = 0; i < lives; i++)
-        {
-            heartRawImage_Array[i].texture = heartImageTexture_Array[1];
-        }
-
-        for (int i = 0; i < rightAnswerTimes; i++)
-        {
-            checkRawImage_Array[i].enabled = true;
-        }
-
-        if (counter < 1)    //回答第一題的時候，第一題答案根本沒出來，所以不用顯示答對與否
-        {
-            return;
-        }
-        else
-        {
-            for (int i = 0; i < optionBtnImage_Array.Length; i++)
-            {
-                optionBtnImage_Array[i].color = new Color(0.3396226f, 0.2685777f, 0.257921f, 0.6f);
-            }
-
-            optionBtnImage_Array[answerNumbers_Array[counter - 1]].color = new Color(0.9811321f, 0.6248419f, 0.01388392f); 
-        }
-    }
-
-
-    public IEnumerator ShowNextPage(int counter)
-    {
-        float waitTime = 0;
-
-        switch (counter)
-        {
-            case 0:
-                waitTime = 1.0f;
-                break;
-            default:
-                waitTime = 2.0f;
-                break;
-        }
-
-        if (counter > 0)
-        {
-            ShowAnswer();
-        }
-
+        float waitTime = 2;
         yield return new WaitForSeconds(waitTime);
 
+        ResetUIComponents();
+        ShowQuestion();
+        SetOptionContents();
+        Permutation();
+        FindAnswerNumber();
+        ShowOptions();
+        startCountDown = true;
+    }
+
+    public void ResetUIComponents()
+    {
         for (int i = 0; i < optionBtnImage_Array.Length; i++)
         {
             optionBtnImage_Array[i].color = new Color(0.9622642f, 0.3850217f, 0.2950338f);
@@ -287,73 +179,61 @@ public class StoryGamePlay : MonoBehaviour
 
         correctObj.SetActive(false);
         incorrectObj.SetActive(false);
+        readAgainBtn.SetActive(true);
+        ResetToggles();
 
-        if (gameOver)
-        {
-            ShowGameResult();
-        }
-        else
-        {
-            ShowQuestion(currentQuestionNumber);
-            ShowOptions(currentQuestionNumber);
-            startCountDown = true;
-        }
     }
 
-    public void ShowAnswer()
+    public void ResetToggles()
     {
-        int choice = choiceNumbers_Array[currentQuestionNumber - 1];
-        int answer = answerNumbers_Array[currentQuestionNumber - 1];
-
-        if (choice == 100)
+        for (int i = 0; i < 3; i++) //命只有 3 條
         {
-
+            heartRawImage_Array[i].texture = heartImageTexture_Array[1];
         }
-        else
+
+        for (int i = 0; i < wrongAnswerTimes; i++) //命只有 3 條
         {
-            
+            heartRawImage_Array[i].texture = heartImageTexture_Array[0];
+        }
+
+        for (int i = 0; i < questionNumbers; i++)
+        {
+            if (checkRawImage_Array.Length <= questionNumbers)
+            {
+                checkRawImage_Array[i].enabled = false;
+            }
+        }
+
+        for (int i = 0; i < rightAnswerTimes; i++)
+        {
+            if (checkRawImage_Array.Length <= questionNumbers)
+            {
+                checkRawImage_Array[i].enabled = true;
+            }
         }
     }
 
-    public void ShowGameResult()
+    public void ShowQuestion()
     {
-
-        if (rightAnswerTimes >= 4)
-        {
-            result_AObject.SetActive(true);
-        }
-        else
-        {
-            result_BObject.SetActive(true);
-        }
+        questionContentsText.text = "問題" + (currentQuestionNumber + 1).ToString() + ": " + questions_Array[currentQuestionNumber].s_QuestionContents;
     }
 
-    public void ShowQuestion(int counter)
+    public void SetOptionContents()
     {
-        questionContentsText.text = "問題" + (currentQuestionNumber + 1).ToString() + ": " + questions_Array[counter].s_QuestionContents;
-    }
+        optionContents_Array[0] = questions_Array[currentQuestionNumber].s_Answer;
+        optionContents_Array[1] = questions_Array[currentQuestionNumber].s_Option1;
+        optionContents_Array[2] = questions_Array[currentQuestionNumber].s_Option2;
+        optionContents_Array[3] = questions_Array[currentQuestionNumber].s_Option3;
 
-    public void ShowOptions(int counter)
-    {
-        optionContents_Array[0] = questions_Array[counter].s_Option1;
-        optionContents_Array[1] = questions_Array[counter].s_Option2;
-        optionContents_Array[2] = questions_Array[counter].s_Option3;
-        optionContents_Array[3] = questions_Array[counter].s_Answer;
-
-        optionOrder_Array[0] = false;
-        optionOrder_Array[1] = false;
-        optionOrder_Array[2] = false;
-        optionOrder_Array[3] = true;
-
-        Permutation(4); //先創布林陣列，才能開始進行亂數排序
-
-        for (int i = 0; i < 4; i++)
+        for (int i = 1; i < optionNumbers; i++)
         {
-            optionContentsText_Array[i].text = AddPrefix(i) + optionContents_Array[i];
+            optionOrder_Array[i] = false;
         }
+
+        optionOrder_Array[0] = true;
     }
 
-    public void Permutation(int howManyOptions) //改變答案及選項的順序
+    public void Permutation()
     {
         List<string> optionListA = new List<string>();
         List<string> optionListB = new List<string>();
@@ -361,36 +241,50 @@ public class StoryGamePlay : MonoBehaviour
         List<bool> optionOrderA = new List<bool>();
         List<bool> optionOrderB = new List<bool>();
 
-        int howManyElementsInListA; //A 集合裡面的元素數量，其實是多餘程式碼，但閱讀性可能較佳
-
-        for (int i = 0; i < howManyOptions; i++)
-        {
-            optionListA.Add(optionContents_Array[i]); //A 集合塞了所有的選項
-            optionOrderA.Add(optionOrder_Array[i]);   //A 集合塞了所有的布林
-        }
+        optionListA = optionContents_Array.ToList();
+        optionOrderA = optionOrder_Array.ToList();
 
         while (optionListA.Count > 0)
         {
-            howManyElementsInListA = optionListA.Count; //算出 A 集合裡面有幾個元素
-            int randomIndex = ((int)UnityEngine.Random.Range(0, howManyElementsInListA)) % howManyElementsInListA;    //取出 A 集合中的第幾個元素
-            optionListB.Add(optionListA[randomIndex]); //將此元素塞進 B 集合中
-            optionOrderB.Add(optionOrderA[randomIndex]); //將此布林塞進 B 集合中
+            int randomIndex = Random.Range(0, optionListA.Count) % optionListA.Count;
+            optionListB.Add(optionListA[randomIndex]);
+            optionOrderB.Add(optionOrderA[randomIndex]);
 
-            optionListA.Remove(optionListA[randomIndex]); //移除 A 集合中剛剛取出的元素
-            optionOrderA.Remove(optionOrderA[randomIndex]); //移除 A 集合中剛剛取出的布林
+            optionListA.Remove(optionListA[randomIndex]);
+            optionOrderA.Remove(optionOrderA[randomIndex]);
         }
 
-        for (int i = 0; i < howManyOptions; i++)    //將新排序後的 B 集合元素丟回所有的選項中
-        {
-            optionContents_Array[i] = optionListB[i];
-            optionOrder_Array[i] = optionOrderB[i];
-        }
+        optionContents_Array = optionListB.ToArray();
+        optionOrder_Array = optionOrderB.ToArray();
 
-        questions_Array[currentQuestionNumber].s_Answer = optionContents_Array[0];  //不再是答案，只是選項
+        questions_Array[currentQuestionNumber].s_Answer = optionContents_Array[0];
         questions_Array[currentQuestionNumber].s_Option1 = optionContents_Array[1];
         questions_Array[currentQuestionNumber].s_Option2 = optionContents_Array[2];
         questions_Array[currentQuestionNumber].s_Option3 = optionContents_Array[3];
+    }
 
+    public void FindAnswerNumber()
+    {
+        int answerNumber = -1;  //答案 -1 不存在
+
+        for (int i = 0; i < optionOrder_Array.Length; i++) //跑完迴圈以後，答案編號就存起來了
+        {
+            if (optionOrder_Array[i] == true)
+            {
+                answerNumber = i;
+                break;
+            }
+        }
+
+        answerNumbers_Array[currentQuestionNumber] = answerNumber;
+    }
+
+    public void ShowOptions()   //這裡隱含寫死只有 4 選項
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            optionContentsText_Array[i].text = AddPrefix(i) + optionContents_Array[i];
+        }
     }
 
     public string AddPrefix(int i) //選項加開頭字串
@@ -410,60 +304,95 @@ public class StoryGamePlay : MonoBehaviour
         }
     }
 
-    public void MakeYourChoice(int youChooseNumber)
+    public void MakePlayerChoice(int chooseNumber)
     {
-
-        if (gameOver)
+        if (currentQuestionNumber == questionNumbers)
         {
-
         }
         else
         {
-            if (startCountDown == true) //倒數計時過程中才能選取答案
+            if (startCountDown == true && playerChoiceNumbers_Array[currentQuestionNumber] == 100) //倒數計時過程中才能選取答案
             {
-                seconds_Array[currentQuestionNumber] = ScoreBoard.GetSeconds(currentQuestionNumber);
-                choiceNumbers_Array[currentQuestionNumber] = youChooseNumber;
-                ScoreBoard.SetChoiceNumbers(currentQuestionNumber, youChooseNumber);
-                CheckAnswer(currentQuestionNumber);
+                playerChoiceNumbers_Array[currentQuestionNumber] = chooseNumber;
+                CheckAnswer();
             }
         }
-
-        startCountDown = false;
     }
 
-    public void CheckAnswer(int counter)
+    public void CheckAnswer()
     {
-        int answerNumber = -1;  //答案 -1 不存在
-
-        for (int i = 0; i < optionOrder_Array.Length; i++)
-        {
-            if (optionOrder_Array[i] == true)
-            {
-                answerNumber = i;
-                break;
-            }
-        }
-
-        answerNumbers_Array[counter] = answerNumber;
-
-        if (choiceNumbers_Array[currentQuestionNumber] == answerNumbers_Array[counter])
+        if (playerChoiceNumbers_Array[currentQuestionNumber] == answerNumbers_Array[currentQuestionNumber])
         {
             correctObj.SetActive(true);
-            //Debug.Log("回答正確");
+            Debug.Log("玩家答對");
 
-            ScoreBoard.AnswerRight(100, currentQuestionNumber);
-            CheckIsGameOver();
-            UpdateUI(currentQuestionNumber);
+            playerAnswerRecords_Array[currentQuestionNumber] = true;
+
+            rightAnswerTimes += 1;
         }
         else
         {
             incorrectObj.SetActive(true);
-            //Debug.Log("回答錯誤");
+            Debug.Log("玩家答錯");
 
-            ScoreBoard.AnswerWrong(100);
-            CheckIsGameOver();
-            UpdateUI(currentQuestionNumber);
+            playerAnswerRecords_Array[currentQuestionNumber] = false;
+
+            wrongAnswerTimes += 1;
+        }
+
+        ShowAnswer();
+
+        startCountDown = false;
+
+        currentQuestionNumber = rightAnswerTimes + wrongAnswerTimes;
+        ShowNextQuestionOrEndGame();
+    }
+
+    public void ShowAnswer()
+    {
+        readAgainBtn.SetActive(false);
+
+        for (int i = 0; i < optionBtnImage_Array.Length; i++)
+        {
+            optionBtnImage_Array[i].color = new Color(0.3396226f, 0.2685777f, 0.257921f, 0.6f);
+        }
+
+        optionBtnImage_Array[answerNumbers_Array[currentQuestionNumber]].color = new Color(0.9811321f, 0.6248419f, 0.01388392f);
+    }
+
+    public void ShowNextQuestionOrEndGame()
+    {
+        if (wrongAnswerTimes >= 3)
+        {
+            IEnumerator coroutine = ShowGameResult();
+            StartCoroutine(coroutine);
+        }
+
+        if (currentQuestionNumber == questionNumbers)
+        {
+            IEnumerator coroutine = ShowGameResult();
+            StartCoroutine(coroutine);
+        }
+        else
+        {
+            UpdateUI();
         }
     }
 
+    public IEnumerator ShowGameResult()
+    {
+        float waitTime = 2;
+        yield return new WaitForSeconds(waitTime);
+
+        if (rightAnswerTimes >= 4)
+        {
+            result_AObject.SetActive(true);
+        }
+        else
+        {
+            result_BObject.SetActive(true);
+        }
+
+        ResetToggles();
+    }
 }
