@@ -6,82 +6,136 @@ using System.IO;
 using MiniJSON;
 using MayCharm.Tools;
 using System.Reflection;
+using System.Linq;
 
 public class JsonDataManager : MonoBehaviour
 {
 
-	public delegate void OnLoadDelegate (string aFileName, float aProcess);
+	/// <summary> 自創變數
 
-    private const string JSON_SAMPLE = "question_test1";
+	public int i_Grade, i_BigCategory, i_SmallCategory, selectedCount;
+	public List<Question1> processedList;
 
+	/// </summary>
+
+	public delegate void OnLoadDelegate(string aFileName, float aProcess);
+	private const string JSON_SAMPLE = "question_test1";
 	private string[] arrayJsonFileNames = new string[] {
-        JSON_SAMPLE
+		JSON_SAMPLE
 	};
 
 	private static JsonDataManager _Instance;
-
-	public static JsonDataManager Singleton {
-		get {
+	public static JsonDataManager Singleton
+	{
+		get
+		{
 			if (_Instance == null)
-				_Instance = FindObjectOfType<JsonDataManager> ();
+				_Instance = FindObjectOfType<JsonDataManager>();
 			if (_Instance == null)
-				Debug.LogError ("JsonDataManager didn't add on GameObject!!");
+				Debug.LogError("JsonDataManager didn't add on GameObject!!");
 			return _Instance;
 		}
 	}
 
-    public Dictionary<int, TestQuestion1> dictTestQuestionJsonData;
+	public Dictionary<int, Question1> dictTestQuestionJsonData;
 
 	//為了方便看資料
 	[SerializeField]
-	private List<TestQuestion1> listTestQuestionData;
+	public List<Question1> listTestQuestionData;
 
-    void Start ()
+	void Start()
 	{
-		DontDestroyOnLoad (this.gameObject);
-        //LoadJsonData();
-
-    }
-
-	
-    public void LoadJsonData (OnLoadDelegate process = null, System.Action done = null)
-	{
-		StartCoroutine (_LoadJsonData (process, done));
+		DontDestroyOnLoad(this.gameObject);
 	}
 
-	private IEnumerator _LoadJsonData (OnLoadDelegate aProcess, System.Action done)
+	public void LoadJsonData(OnLoadDelegate process = null, System.Action done = null)
+	{
+		StartCoroutine(_LoadJsonData(process, done));
+	}
+
+	private IEnumerator _LoadJsonData(OnLoadDelegate aProcess, System.Action done)
 	{
 
-        int count = 0;
-		foreach (string fileName in arrayJsonFileNames) {
+		int count = 0;
+		foreach (string fileName in arrayJsonFileNames)
+		{
 
-            if (aProcess != null)
-				aProcess (fileName, count == 0 ? 0 : (float)count / (float)arrayJsonFileNames.Length);
-			
-			TextAsset jsonText = Resources.Load<TextAsset> (string.Format ("Json/{0}", fileName));
-			if (jsonText != null) {
-                Dictionary<string, object> dict = Json.Deserialize (jsonText.text) as Dictionary<string, object>;
-				SetJsonData (fileName, dict);
+			if (aProcess != null)
+				aProcess(fileName, count == 0 ? 0 : (float)count / (float)arrayJsonFileNames.Length);
+
+			TextAsset jsonText = Resources.Load<TextAsset>(string.Format("Json/{0}", fileName));
+			if (jsonText != null)
+			{
+				Dictionary<string, object> dict = Json.Deserialize(jsonText.text) as Dictionary<string, object>;
+				SetJsonData(fileName, dict);
 			}
 			count++;
 			if (aProcess != null)
-				aProcess (fileName, (float)count / (float)arrayJsonFileNames.Length);
+				aProcess(fileName, (float)count / (float)arrayJsonFileNames.Length);
 		}
 		if (done != null)
-			done ();
+			done();
 		yield return null;
 	}
-	
 
-
-	private void SetJsonData (string aJsonName, Dictionary<string, object> aDictData)
+	private void SetJsonData(string aJsonName, Dictionary<string, object> aDictData)
 	{
-        Debug.Log("aJsonName:"+ aJsonName);
-		switch (aJsonName) {
-            case JSON_SAMPLE:
+		Debug.Log("aJsonName:" + aJsonName);
+		switch (aJsonName)
+		{
+			case JSON_SAMPLE:
 				JsonDataTool.SetJsonDataToDictionary(aDictData, ref dictTestQuestionJsonData);
-				listTestQuestionData = new List<TestQuestion1>(dictTestQuestionJsonData.Values);
-                break;
+				listTestQuestionData = new List<Question1>(dictTestQuestionJsonData.Values);
+				break;
 		}
+	}
+
+	//	以下為自行追加內容
+
+	public void SetGrade(int grade)	//////
+	{
+        i_Grade = grade;
+	}
+
+	public void SetBigCategory(int bigCategory)
+	{
+		i_BigCategory = bigCategory;
+	}
+
+	public void SetSmallCategory(int smallCategory)
+	{
+		i_SmallCategory = smallCategory;
+	}
+
+	public void SetProcessedList()
+	{
+		processedList.Clear();
+
+		IEnumerable<Question1> selection = from obj in listTestQuestionData where obj.i_Grade == (i_Grade * 2) || obj.i_Grade == (i_Grade * 2 + 1) select obj;
+		foreach (var item in selection)
+		{
+			processedList.Add(item);
+		}
+
+		selectedCount = processedList.Count();
+
+	}
+
+	public void UseOriginalListAsProcessedList()
+    {
+		processedList.Clear();
+		IEnumerable<Question1> selection = from obj in listTestQuestionData select obj;
+
+		foreach (var item in selection)
+        {
+			processedList.Add(item);
+        }
+
+		selectedCount = processedList.Count();
+    }
+
+	public void StoryMode()
+	{
+		processedList.Clear();
 	}
 }
