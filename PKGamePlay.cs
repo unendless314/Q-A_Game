@@ -33,7 +33,7 @@ public class PKGamePlay : MonoBehaviour
     public string[] optionContents_Array;
     public bool[] optionOrder_Array;
 
-    public Question1[] questions_Array;
+    public Question2[] questions_Array;
     public Text questionContentsText;
     public Text[] optionContentsText_Array;
     public Slider timeSlider;
@@ -42,21 +42,13 @@ public class PKGamePlay : MonoBehaviour
     public Text playerScoreText;
     public Text aIScoreText;
 
-    public GameObject correctObj;
-    public GameObject incorrectObj;
+    public GameObject aI_CorrectObj;
+    public GameObject aI_IncorrectObj;
+    public GameObject player_CorrectObj;
+    public GameObject player_IncorrectObj;
     public GameObject result_AObject;
     public GameObject result_BObject;
-    public GameObject readAgainBtn;
-
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        //Initialize();
-        //SetQuestionIndexes();
-        //SetQuestions();
-        //UpdateUI();
-    }
+    //public GameObject result_CObject; //平手畫面
 
     // Update is called once per frame
     void Update()
@@ -85,7 +77,7 @@ public class PKGamePlay : MonoBehaviour
                     timeSlider.value = timeRemaing / timeLimit;
                 }
 
-                if (timeRemaing < 7)    //我時間寫死了
+                if (timeRemaing < 9)    //我時間寫死了
                 {
                     if (aIChoiceNumbers_Array[currentQuestionNumber] == 100)
                     {
@@ -115,7 +107,7 @@ public class PKGamePlay : MonoBehaviour
 
 
         questionIDs_Array = new int[questionNumbers];
-        questions_Array = new Question1[questionNumbers];
+        questions_Array = new Question2[questionNumbers];
 
         playerChoiceNumbers_Array = new int[questionNumbers];
         answerNumbers_Array = new int[questionNumbers];
@@ -178,7 +170,7 @@ public class PKGamePlay : MonoBehaviour
     {
         for (int i = 0; i < questionIDs_Array.Length; i++)
         {
-            questions_Array[i] = JsonDataManager.Singleton.processedList.Find((Question1 obj) => obj.i_id == questionIDs_Array[i]);
+            questions_Array[i] = JsonDataManager.Singleton.processedList.Find((Question2 obj) => obj.i_id == questionIDs_Array[i]);
         }
     }
 
@@ -214,10 +206,12 @@ public class PKGamePlay : MonoBehaviour
 
         }
 
-        correctObj.SetActive(false);
-        incorrectObj.SetActive(false);
-        readAgainBtn.SetActive(true);
-        ResetToggles();
+        aI_CorrectObj.SetActive(false);
+        aI_IncorrectObj.SetActive(false);
+        player_CorrectObj.SetActive(false);
+        player_IncorrectObj.SetActive(false);
+
+        //ResetToggles();   //對戰模式沒有此按鈕
 
     }
 
@@ -370,7 +364,7 @@ public class PKGamePlay : MonoBehaviour
 
                 if (aIChoiceNumbers_Array[currentQuestionNumber] == answerNumbers_Array[currentQuestionNumber])
                 {
-                    Debug.Log("AI 答對");
+                    aI_CorrectObj.SetActive(true);
 
                     aIAnswerRecords_Array[currentQuestionNumber] = true;
                     aIFeverCounter += 1;
@@ -379,7 +373,7 @@ public class PKGamePlay : MonoBehaviour
                 }
                 else
                 {
-                    Debug.Log("AI 答錯");
+                    aI_IncorrectObj.SetActive(true);
 
                     aIAnswerRecords_Array[currentQuestionNumber] = false;
                     aIFeverCounter = 0;
@@ -391,8 +385,7 @@ public class PKGamePlay : MonoBehaviour
 
                 if (playerChoiceNumbers_Array[currentQuestionNumber] == answerNumbers_Array[currentQuestionNumber])
                 {
-                    correctObj.SetActive(true);
-                    Debug.Log("玩家答對");
+                    player_CorrectObj.SetActive(true);
 
                     playerAnswerRecords_Array[currentQuestionNumber] = true;
                     playerFeverCounter += 1;
@@ -402,8 +395,7 @@ public class PKGamePlay : MonoBehaviour
                 }
                 else
                 {
-                    incorrectObj.SetActive(true);
-                    Debug.Log("玩家答錯");
+                    player_IncorrectObj.SetActive(true);
 
                     playerAnswerRecords_Array[currentQuestionNumber] = false;
                     playerFeverCounter = 0;
@@ -477,7 +469,7 @@ public class PKGamePlay : MonoBehaviour
 
     public void ShowAnswer()
     {
-        readAgainBtn.SetActive(false);
+        //readAgainBtn.SetActive(false); //對戰模式沒有此按鈕
 
         for (int i = 0; i < optionBtnImage_Array.Length; i++)
         {
@@ -505,15 +497,19 @@ public class PKGamePlay : MonoBehaviour
         float waitTime = 2;
         yield return new WaitForSeconds(waitTime);
 
-        if (rightAnswerTimes >= 4)
+        if (playerScore > aIScore)
         {
             result_AObject.SetActive(true);
         }
-        else
+        else if (playerScore < aIScore)
         {
             result_BObject.SetActive(true);
         }
+        else
+        {
+            //result_CObject.SetActive(true);
+        }
 
-        ResetToggles();
+        //ResetToggles();   //對戰模式沒有此按鈕
     }
 }
