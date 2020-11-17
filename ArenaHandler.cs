@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -62,7 +62,10 @@ public class ArenaHandler : GameModeController
     public GameObject checkCellObj;
 
     public Button endResultBtn1, endResultBtn2;
+    public ReviewHandler reviewHandler;
 
+    public GameObject MisakiObj;
+    public GameObject MisakiCamera;
 
     void Update()
     {
@@ -107,6 +110,9 @@ public class ArenaHandler : GameModeController
 
     public void Initialize()
     {
+        MisakiObj.SetActive(true);
+        MisakiCamera.SetActive(true);
+
         playerScore = 0;
         aIScore = 0;
         rightAnswerTimes = 0;
@@ -148,29 +154,12 @@ public class ArenaHandler : GameModeController
             checkRawImage_Array[i].enabled = false;
         }
 
-        CreateToggles();
+        AddArenaContent();
         SetQuestionIndexes();
         SetQuestions();
         UpdateUI();
         ResetUIComponents();
         ShowScore();
-    }
-
-    public void CreateToggles() //動態生成無法克服原始圖型反轉的問題?
-    {
-        checkRawImage_Array = new RawImage[questionNumbers];
-        squareRawImage_Array = new RawImage[questionNumbers];
-
-        for (int i = 0; i < questionNumbers; i++)
-        {
-            GameObject checkCell = UnityTool.AddUGUIChild(checkGridLayout.transform, checkCellObj);
-            GameObject squareCell = UnityTool.AddUGUIChild(squareGridLayout.transform, squareCellObj);
-
-            checkRawImage_Array[i] = checkCell.GetComponent<RawImage>();
-            squareRawImage_Array[i] = squareCell.GetComponent<RawImage>();
-
-            checkRawImage_Array[i].enabled = false;
-        }
     }
 
     public void SetQuestionIndexes()
@@ -230,11 +219,6 @@ public class ArenaHandler : GameModeController
         for (int i = 0; i < optionBtnImage_Array.Length; i++)
         {
             optionBtnImage_Array[i].color = new Color(0.9622642f, 0.3850217f, 0.2950338f);
-        }
-
-        for (int i = 0; i < currentQuestionNumber; i++)
-        {
-
         }
 
         aI_CorrectObj.SetActive(false);
@@ -555,65 +539,58 @@ public class ArenaHandler : GameModeController
 
     private void OnEndClick()
     {
+        if (currentLifeCycleState != LifeCycleState.RESUME)
+            return;
+        currentLifeCycleState = LifeCycleState.PAUSE;
+
         result_AObject.SetActive(false);
         result_BObject.SetActive(false);
+        MisakiObj.SetActive(false);
+        MisakiCamera.SetActive(true);
 
-        CurrectGamePlayMode = GameMode.REVIEW;
+        SetReviewData();
+        //PopControllerAndPlayMode(this, GameMode.REVIEW);
+        CurrectGamePlayMode = GameMode.REVIEW;  //暫時先這樣寫
+    }
+
+    private void SetReviewData()
+    {
+        reviewHandler.questions_Array = questions_Array;  //這裡已經是換選項後的問題
+        reviewHandler.playerAnswerRecords_Array = playerAnswerRecords_Array;
     }
 
     public override void OnNavigationStart()
     {
         base.OnNavigationStart();
-        AddMatchContent();
+        AddArenaContent();
     }
 
-    private void AddMatchContent()
+    private void AddArenaContent()
     {
+        checkRawImage_Array = new RawImage[questionNumbers];
+        squareRawImage_Array = new RawImage[questionNumbers];
+
         for (int i = 0; i < questionNumbers; i++)
         {
-            //GameObject cell = UnityTool.AddUGUIChild();
+            GameObject checkCell = UnityTool.AddUGUIChild(checkGridLayout.transform, checkCellObj);
+            GameObject squareCell = UnityTool.AddUGUIChild(squareGridLayout.transform, squareCellObj);
 
+            checkRawImage_Array[i] = checkCell.GetComponent<RawImage>();
+            squareRawImage_Array[i] = squareCell.GetComponent<RawImage>();
 
+            checkRawImage_Array[i].enabled = false;
         }
-
-        /*
-        foreach (var item in arenaData)
-        {
-            //GameObject cell = UnityTool.AddUGUIChild(scrollRect.content, objArenaCell);
-            //ArenaCellHandler handler = cell.GetComponent<ArenaCellHandler>();
-            //handler.SetCellContent(item, OnCellClickCallback);
-            //listCell.Add(handler);
-        }
-        */
     }
 
     public override void OnNavigationDestroy()
     {
-        /*
-        UnityTool.RemoveAllChild(scrollRect.content.gameObject);
-        listCell.Clear();
         base.OnNavigationDestroy();
-        */
     }
 
     public override void OnNavigationStop()
     {
+        UnityTool.RemoveAllChild(checkGridLayout.transform.gameObject);
+        UnityTool.RemoveAllChild(squareGridLayout.transform.gameObject);
         base.OnNavigationStop();
-    }
-
-
-    /// <summary>
-    /// 非常不確定這種寫法可不可以成功
-    /// </summary>
-    
-    private void OnCellClickCallback(ArenaHandler aArenaHandler)
-    {
-        
-        if (currentLifeCycleState != LifeCycleState.RESUME)
-            return;
-        currentLifeCycleState = LifeCycleState.PAUSE;
-
-        CurrectGamePlayMode = GameMode.ARENA;
-        
     }
 }
