@@ -107,11 +107,6 @@ public class ArenaHandler : GameModeController
                 {
                     MakePlayerChoice(99);
                 }
-
-                if (playerChoiceNumbers_Array[currentQuestionNumber] == 100)
-                {
-                    backendSeconds_Array[currentQuestionNumber] = playerSeconds_Array[currentQuestionNumber];
-                }
             }
         }
     }
@@ -362,6 +357,9 @@ public class ArenaHandler : GameModeController
             if (startCountDown == true && playerChoiceNumbers_Array[currentQuestionNumber] == 100) //倒數計時過程中才能選取答案
             {
                 playerChoiceNumbers_Array[currentQuestionNumber] = chooseNumber;
+
+                backendSeconds_Array[currentQuestionNumber] = playerSeconds_Array[currentQuestionNumber];
+
                 CheckAnswer("thisIsPlayer");
             }
         }
@@ -428,7 +426,7 @@ public class ArenaHandler : GameModeController
 
                     wrongAnswerTimes += 1;
 
-                    backendSeconds_Array[currentQuestionNumber] = -1;
+                    backendSeconds_Array[currentQuestionNumber] = -1;   //秒數設為負 1，意味玩家答錯
                 }
 
                 ShowAnswer();
@@ -616,7 +614,7 @@ public class ArenaHandler : GameModeController
         reviewHandler.questions_Array = questions_Array;  //這裡已經是換選項後的問題
         reviewHandler.answerNumbers_Array = answerNumbers_Array;
         reviewHandler.playerChoiceNumbers_Array = playerChoiceNumbers_Array;
-        reviewHandler.AddReviewContent("競技模式");
+        reviewHandler.AddReviewContent();
         reviewHandler.toMapButtonObj.SetActive(false);
     }
 
