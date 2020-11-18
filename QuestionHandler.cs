@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -446,7 +446,7 @@ public class QuestionHandler : GameModeController
         reviewHandler.questions_Array = questions_Array;  //這裡已經是換選項後的問題
         reviewHandler.answerNumbers_Array = answerNumbers_Array;
         reviewHandler.playerChoiceNumbers_Array = playerChoiceNumbers_Array;
-        reviewHandler.AddReviewContent("故事模式");
+        reviewHandler.AddReviewContent();
         reviewHandler.toMapButtonObj.SetActive(true);
     }
 
