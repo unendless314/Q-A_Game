@@ -20,6 +20,7 @@ public class ArenaHandler : GameModeController
     public bool startCountDown;
 
     public float[] playerSeconds_Array;
+    public float[] backendSeconds_Array;
     public bool[] playerAnswerRecords_Array;
     public int[] playerChoiceNumbers_Array;
     public int[] answerNumbers_Array;
@@ -106,6 +107,11 @@ public class ArenaHandler : GameModeController
                 {
                     MakePlayerChoice(99);
                 }
+
+                if (playerChoiceNumbers_Array[currentQuestionNumber] == 100)
+                {
+                    backendSeconds_Array[currentQuestionNumber] = playerSeconds_Array[currentQuestionNumber];
+                }
             }
         }
     }
@@ -126,6 +132,7 @@ public class ArenaHandler : GameModeController
         startCountDown = false;
 
         playerSeconds_Array = new float[questionNumbers];
+        backendSeconds_Array = new float[questionNumbers];
         playerAnswerRecords_Array = new bool[questionNumbers];
         playerChoiceNumbers_Array = new int[questionNumbers];
         answerNumbers_Array = new int[questionNumbers];
@@ -420,6 +427,8 @@ public class ArenaHandler : GameModeController
                     playerFeverCounter = 0;
 
                     wrongAnswerTimes += 1;
+
+                    backendSeconds_Array[currentQuestionNumber] = -1;
                 }
 
                 ShowAnswer();
