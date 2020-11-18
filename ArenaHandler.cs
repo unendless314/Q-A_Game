@@ -33,8 +33,8 @@ public class ArenaHandler : GameModeController
     public string[] optionContents_Array;
     public bool[] optionOrder_Array;
 
-    public List<Question2> processedList;
-    public Question2[] questions_Array;
+    public List<Question3> processedList;
+    public Question3[] questions_Array;
     public Text questionContentsText;
     public Text[] optionContentsText_Array;
     public Slider timeSlider;
@@ -66,6 +66,8 @@ public class ArenaHandler : GameModeController
 
     public GameObject MisakiObj;
     public GameObject MisakiCamera;
+    public GameObject AssetsObj;
+    public GameObject upgradeObj;
 
     void Update()
     {
@@ -112,6 +114,7 @@ public class ArenaHandler : GameModeController
     {
         MisakiObj.SetActive(true);
         MisakiCamera.SetActive(true);
+        AssetsObj.SetActive(false);
 
         playerScore = 0;
         aIScore = 0;
@@ -131,7 +134,7 @@ public class ArenaHandler : GameModeController
         questionIDs_Array = new int[questionNumbers];
         optionContents_Array = new string[optionNumbers];
         optionOrder_Array = new bool[optionNumbers];
-        questions_Array = new Question2[questionNumbers];
+        questions_Array = new Question3[questionNumbers];
 
         //以下是不好的寫法，沒有狀態機，但因為比較有把握所以先這麼寫
 
@@ -149,10 +152,12 @@ public class ArenaHandler : GameModeController
 
         timeSlider.value = 1;
 
+        /*
         for (int i = 0; i < checkRawImage_Array.Length; i++)
         {
             checkRawImage_Array[i].enabled = false;
         }
+        */
 
         AddArenaContent();
         SetQuestionIndexes();
@@ -190,7 +195,7 @@ public class ArenaHandler : GameModeController
     {
         for (int i = 0; i < questionIDs_Array.Length; i++)
         {
-            questions_Array[i] = processedList.Find((Question2 obj) => obj.i_id == questionIDs_Array[i]);
+            questions_Array[i] = processedList.Find((Question3 obj) => obj.i_id == questionIDs_Array[i]);
         }
     }
 
@@ -251,15 +256,15 @@ public class ArenaHandler : GameModeController
 
     public void ShowQuestion()
     {
-        questionContentsText.text = "問題" + (currentQuestionNumber + 1).ToString() + ": " + questions_Array[currentQuestionNumber].s_QuestionContents;
+        questionContentsText.text = "問題" + (currentQuestionNumber + 1).ToString() + ": " + questions_Array[currentQuestionNumber].s_topic;
     }
 
     public void SetOptionContents()
     {
-        optionContents_Array[0] = questions_Array[currentQuestionNumber].s_Answer;
-        optionContents_Array[1] = questions_Array[currentQuestionNumber].s_Option1;
-        optionContents_Array[2] = questions_Array[currentQuestionNumber].s_Option2;
-        optionContents_Array[3] = questions_Array[currentQuestionNumber].s_Option3;
+        optionContents_Array[0] = questions_Array[currentQuestionNumber].s_answer;
+        optionContents_Array[1] = questions_Array[currentQuestionNumber].s_item1;
+        optionContents_Array[2] = questions_Array[currentQuestionNumber].s_item2;
+        optionContents_Array[3] = questions_Array[currentQuestionNumber].s_item3;
 
         for (int i = 1; i < optionNumbers; i++)
         {
@@ -293,10 +298,10 @@ public class ArenaHandler : GameModeController
         optionContents_Array = optionListB.ToArray();
         optionOrder_Array = optionOrderB.ToArray();
 
-        questions_Array[currentQuestionNumber].s_Answer = optionContents_Array[0];
-        questions_Array[currentQuestionNumber].s_Option1 = optionContents_Array[1];
-        questions_Array[currentQuestionNumber].s_Option2 = optionContents_Array[2];
-        questions_Array[currentQuestionNumber].s_Option3 = optionContents_Array[3];
+        questions_Array[currentQuestionNumber].s_answer = optionContents_Array[0];
+        questions_Array[currentQuestionNumber].s_item1 = optionContents_Array[1];
+        questions_Array[currentQuestionNumber].s_item2 = optionContents_Array[2];
+        questions_Array[currentQuestionNumber].s_item3 = optionContents_Array[3];
     }
 
     public void FindAnswerNumber()
@@ -442,7 +447,7 @@ public class ArenaHandler : GameModeController
             case "thisIsAI":
                 if (rightAnswer)
                 {
-                    aIScore += 100 + (int)(timeRemaing * 10) + feverCounter * 15;  //這裡還要改
+                    aIScore += (int)(100 + (timeRemaing * 10) * Weight(feverCounter));  //這裡還要改
                 }
 
                 break;
@@ -450,13 +455,46 @@ public class ArenaHandler : GameModeController
             case "thisIsPlayer":
                 if (rightAnswer)
                 {
-                    playerScore += 100 + (int)(timeRemaing * 10) + feverCounter * 15;   //這裡還要改
+                    playerScore += (int)(100 + (timeRemaing * 10) * Weight(feverCounter));   //這裡還要改
                 }
 
                 break;
 
             default:
                 break;
+        }
+    }
+
+    public float Weight(int feverCounter)
+    {
+        switch (feverCounter)
+        {
+            case 0:
+                return 1;
+
+            case 1:
+                return 1;
+
+            case 2:
+                return 1;
+
+            case 3:
+                return 1.25f;
+
+            case 4:
+                return 1.45f;
+
+            case 5:
+                return 1.65f;
+
+            case 6:
+                return 1.85f;
+
+            case 7:
+                return 2;
+
+            default:
+                return 2;
         }
     }
 
@@ -514,9 +552,11 @@ public class ArenaHandler : GameModeController
         if (playerScore > aIScore)
         {
             result_AObject.SetActive(true);
+            upgradeObj.GetComponent<RankRise>().SetRankRiseContents("Rank Rise!", aILevelText.text, playerLevelText.text, playerNickNameText.text);
         }
         else if (playerScore < aIScore)
         {
+            upgradeObj.GetComponent<RankRise>().SetRankRiseContents("Rank Fall!", aILevelText.text, playerLevelText.text, playerNickNameText.text);
             result_BObject.SetActive(true);
         }
         else
@@ -547,22 +587,34 @@ public class ArenaHandler : GameModeController
         result_BObject.SetActive(false);
         MisakiObj.SetActive(false);
         MisakiCamera.SetActive(true);
+        AssetsObj.SetActive(true);
+
+        upgradeObj.SetActive(true);
+        upgradeObj.GetComponent<RankRise>().DisplayForFiveSeconds();
 
         SetReviewData();
         //PopControllerAndPlayMode(this, GameMode.REVIEW);
+
+
+        upgradeObj.SetActive(true);
+
+
         CurrectGamePlayMode = GameMode.REVIEW;  //暫時先這樣寫
     }
 
     private void SetReviewData()
     {
         reviewHandler.questions_Array = questions_Array;  //這裡已經是換選項後的問題
-        reviewHandler.playerAnswerRecords_Array = playerAnswerRecords_Array;
+        reviewHandler.answerNumbers_Array = answerNumbers_Array;
+        reviewHandler.playerChoiceNumbers_Array = playerChoiceNumbers_Array;
+        reviewHandler.AddReviewContent("競技模式");
+        reviewHandler.toMapButtonObj.SetActive(false);
     }
 
     public override void OnNavigationStart()
     {
         base.OnNavigationStart();
-        AddArenaContent();
+        //AddArenaContent();
     }
 
     private void AddArenaContent()
