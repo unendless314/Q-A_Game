@@ -66,6 +66,8 @@ public class QuestionHandler : GameModeController
     public Button quitGameBtn;
     public Button [] choiceBtn_Array;
 
+    public Color color;
+
     public enum CategoryStatus
     {
         Article,
@@ -119,7 +121,7 @@ public class QuestionHandler : GameModeController
     public override void OnNavigationStart()
     {
         base.OnNavigationStart();
-        AddStoryContent();
+        //AddStoryContent();
     }
 
     private void AddStoryContent()
@@ -251,7 +253,16 @@ public class QuestionHandler : GameModeController
         SelectGamePlayStage(GamePlayStage.Pause);
         startCountDown = false;
         questionPageObj.SetActive(false);
-        hintWindowObj.SetActive(true);
+        DialogManager.Singleton.ShowConfirmDialog("是否離開故事模式回到主選單？", delegate
+        {
+            QuitGame();
+        }
+        ,
+        delegate (BaseDialogHandler aHandler)
+        {
+            ReturnGame();
+        });
+        //hintWindowObj.SetActive(true);
     }
 
     public void ReturnGame()
@@ -259,7 +270,7 @@ public class QuestionHandler : GameModeController
         SelectGamePlayStage(GamePlayStage.ShowUIElements);
         startCountDown = true;
         questionPageObj.SetActive(true);
-        hintWindowObj.SetActive(false);
+        //hintWindowObj.SetActive(false);
     }
 
     public void QuitGame()
@@ -286,15 +297,15 @@ public class QuestionHandler : GameModeController
     {
         if (GameDataManager.Singleton.categoryStatus == CategoryStatus.Article)
         {
-            // 不會有 update
+            return;
         }
         else if (currentQuestionNumber >= questionNumbers)
         {
-            // 不會有 update
+            return;
         }
         else if (startCountDown == false)
         {
-            // 不會有 update
+            return;
         }
         else if (wrongAnswerTimes < 3)
         {
@@ -589,7 +600,6 @@ public class QuestionHandler : GameModeController
     {
         if (GameDataManager.Singleton.gamePlayStage == GamePlayStage.EndGame)
         {
-            Debug.Log("遊戲提前結束");
             IEnumerator coroutine = ShowGameResult();
             StartCoroutine(coroutine);
             return;
@@ -632,6 +642,7 @@ public class QuestionHandler : GameModeController
 
         if (endResultBtn1 != null)
         {
+            endResultBtn1.onClick.RemoveAllListeners();
             endResultBtn1.onClick.AddListener(OnEndClick);
         }
 
@@ -643,6 +654,7 @@ public class QuestionHandler : GameModeController
 
     public void OnEndClick()
     {
+        Debug.LogFormat("OnEndClick");
         if (currentLifeCycleState != LifeCycleState.RESUME)
             return;
         currentLifeCycleState = LifeCycleState.PAUSE;
