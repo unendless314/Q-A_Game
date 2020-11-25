@@ -11,6 +11,7 @@ public class QuestionHandler : GameModeController
     public int optionNumbers;
     public int wrongAnswerTimes;
     public int rightAnswerTimes;
+    public int i_correct;
     public float timeLimit;
     public float timeRemaing;
     public bool startCountDown;
@@ -26,15 +27,14 @@ public class QuestionHandler : GameModeController
     public string[] optionContents_Array;
     public bool[] optionOrder_Array;
 
-    public List<Question3> processedList;
-    public Question3[] questions_Array;
+    public List<Question3> processedList;   //要改
+    public Question3[] questions_Array; //要改
     public Text questionContentsText;
     public Text[] optionContentsText_Array;
     public Slider timeSlider;
-    public RawImage[] checkRawImage_Array;
+    public GameObject[] checkRawObj_Array;
     public RawImage[] squareRawImage_Array;
-    public RawImage[] heartRawImage_Array;
-    public Texture[] heartImageTexture_Array;
+    public RawImage[] eraserRawImage_Array;
     public Image[] optionBtnImage_Array;
 
     public GameObject player_CorrectObj;
@@ -48,25 +48,34 @@ public class QuestionHandler : GameModeController
     public GridLayoutGroup checkGridLayout;
     public GameObject squareCellObj;
     public GameObject checkCellObj;
+    public GameObject textCellObj;
 
     public Button endResultBtn1, endResultBtn2;
     public ReviewHandler reviewHandler;
-    public Image baseImage;
-    public Text baseText;
+    //  public Image baseImage; //暫時用不到
+    public Text baseChineseText;
+    public Text baseEnglishText;
+    public Text progressText;
 
-    public GameObject questionBGObj;
-    public GameObject uI3D_CameraObj;
-    public GameObject assetsObj;
+    public GameObject profileObj;
+    public GameObject storyObj;
+    public GameObject arenaObj;
+    public GameObject assetsHeartsObj;
+    public GameObject assetsDimondsObj;
 
     public GameObject questionPageObj;
     public GameObject articlePageObj;
-    public GameObject hintWindowObj;
+    public Button[] choiceBtn_Array;
+
+
     public GameObject pauseGameButtonObj;
     public Button returnGameBtn;
     public Button quitGameBtn;
-    public Button [] choiceBtn_Array;
-
-    public Color color;
+    public GameObject hintWindowObj;
+    public Color originalBtnColor, fadeBtnColor, wrongBtnColor, rightBtnColor;
+    public Color originalTextColor, fadeTextColor, wrongTextColor, rightTextColor;
+    public Sprite[] sprite_Array;
+    public List<JsonConfigData> listConfigData;
 
     public enum CategoryStatus
     {
@@ -121,33 +130,37 @@ public class QuestionHandler : GameModeController
     public override void OnNavigationStart()
     {
         base.OnNavigationStart();
-        //AddStoryContent();
+        //AddStoryContent();    //寫在這裡不會自己執行，原因不明，只好從外面呼叫
     }
 
-    private void AddStoryContent()
+    public void AddStoryContent()
     {
-        checkRawImage_Array = new RawImage[questionNumbers];
-        squareRawImage_Array = new RawImage[questionNumbers];
+        checkRawObj_Array = new GameObject[i_correct];    // 2020/11/25
+        squareRawImage_Array = new RawImage[i_correct];   // 測試只生成正確題數量
 
-        for (int i = 0; i < questionNumbers; i++)
+        GameObject textCell = UnityTool.AddUGUIChild(squareGridLayout.transform, textCellObj);
+        progressText = textCell.transform.GetChild(0).GetComponent<Text>();
+
+        for (int i = 0; i < i_correct; i++) // 測試只生成正確題數量
         {
-            GameObject checkCell = UnityTool.AddUGUIChild(checkGridLayout.transform, checkCellObj);
-            GameObject squareCell = UnityTool.AddUGUIChild(squareGridLayout.transform, squareCellObj);
+            GameObject checkCell = UnityTool.AddUGUIChild(checkGridLayout.transform, checkCellObj); //要改
+            GameObject squareCell = UnityTool.AddUGUIChild(squareGridLayout.transform, squareCellObj);  //要改
 
-            checkRawImage_Array[i] = checkCell.GetComponent<RawImage>();
             squareRawImage_Array[i] = squareCell.GetComponent<RawImage>();
-
-            checkRawImage_Array[i].enabled = false;
+            checkRawObj_Array[i] = checkCell;
+            checkRawObj_Array[i].SetActive(false);
         }
 
         if (GameDataManager.Singleton.categoryStatus == CategoryStatus.Article)
         {
             readAgainBtn.SetActive(true);
+            readAgainBtn.GetComponent<Button>().onClick.RemoveAllListeners();
             readAgainBtn.GetComponent<Button>().onClick.AddListener(delegate ()
             {
                 ShowArticle();
             });
 
+            readFinishBtn.GetComponent<Button>().onClick.RemoveAllListeners();
             readFinishBtn.GetComponent<Button>().onClick.AddListener(delegate ()
             {
                 CloseArticle();
@@ -177,13 +190,16 @@ public class QuestionHandler : GameModeController
 
     public override void OnNavigationDestroy()
     {
+        UnityTool.RemoveAllChild(squareGridLayout.transform.gameObject);    //要改
+        UnityTool.RemoveAllChild(checkGridLayout.transform.gameObject); //要改
+
         base.OnNavigationDestroy();
     }
 
     public override void OnNavigationStop()
     {
-        UnityTool.RemoveAllChild(checkGridLayout.transform.gameObject);
-        UnityTool.RemoveAllChild(squareGridLayout.transform.gameObject);
+        UnityTool.RemoveAllChild(squareGridLayout.transform.gameObject);    //要改
+        UnityTool.RemoveAllChild(checkGridLayout.transform.gameObject); //要改
         base.OnNavigationStop();
     }
 
@@ -191,9 +207,13 @@ public class QuestionHandler : GameModeController
     {
         SelectGamePlayStage(GamePlayStage.Initialize);
 
-        assetsObj.SetActive(false);
-        uI3D_CameraObj.SetActive(true);
-        questionBGObj.SetActive(true);
+        LoadConfigData();
+
+        assetsHeartsObj.SetActive(false);
+        assetsDimondsObj.SetActive(false);
+        profileObj.SetActive(false);
+        storyObj.SetActive(true);
+        arenaObj.SetActive(false);
 
         rightAnswerTimes = 0;
         wrongAnswerTimes = 0;
@@ -222,17 +242,26 @@ public class QuestionHandler : GameModeController
 
         timeSlider.value = 1;
 
-        pauseGameButtonObj.GetComponent<Button>().onClick.AddListener(PauseGame);
-        returnGameBtn.onClick.AddListener(ReturnGame);
-        quitGameBtn.onClick.AddListener(QuitGame);
+        //pauseGameButtonObj.GetComponent<Button>().onClick.RemoveAllListeners();
+        //returnGameBtn.onClick.RemoveAllListeners();
+        //quitGameBtn.onClick.RemoveAllListeners();
+
+        //pauseGameButtonObj.GetComponent<Button>().onClick.AddListener(PauseGame);
+        //returnGameBtn.onClick.AddListener(ReturnGame);
+        //quitGameBtn.onClick.AddListener(QuitGame);
 
         //居然不能用迴圈，真是奇妙
+        choiceBtn_Array[0].onClick.RemoveAllListeners();
+        choiceBtn_Array[1].onClick.RemoveAllListeners();
+        choiceBtn_Array[2].onClick.RemoveAllListeners();
+        choiceBtn_Array[3].onClick.RemoveAllListeners();
+
         choiceBtn_Array[0].onClick.AddListener(delegate { MakePlayerChoice(0); });
         choiceBtn_Array[1].onClick.AddListener(delegate { MakePlayerChoice(1); });
         choiceBtn_Array[2].onClick.AddListener(delegate { MakePlayerChoice(2); });
         choiceBtn_Array[3].onClick.AddListener(delegate { MakePlayerChoice(3); });
 
-        UndoPreviousUIChange(); //這樣好嗎?
+        UndoPreviousUIChange();
         SetToggles();
 
         if (GameDataManager.Singleton.categoryStatus == CategoryStatus.Article)
@@ -277,8 +306,7 @@ public class QuestionHandler : GameModeController
     {
         startCountDown = false;
         hintWindowObj.SetActive(false);
-        uI3D_CameraObj.SetActive(false);
-        questionBGObj.SetActive(false);
+        storyObj.SetActive(false);
         questionPageObj.SetActive(true);
         SelectGamePlayStage(GamePlayStage.EndGame);
         ShowNextQuestionOrEndGame();
@@ -299,7 +327,7 @@ public class QuestionHandler : GameModeController
         {
             return;
         }
-        else if (currentQuestionNumber >= questionNumbers)
+        else if (rightAnswerTimes >= i_correct)
         {
             return;
         }
@@ -322,6 +350,18 @@ public class QuestionHandler : GameModeController
             {
                 MakePlayerChoice(99);
             }
+        }
+        else
+        {
+            return;
+        }
+    }
+
+    public void LoadConfigData()
+    {
+        for (int i = 1; i <= JsonDataManager.Singleton.dictJsonConfigData.Count; i++)
+        {
+            listConfigData.Add(JsonDataManager.Singleton.dictJsonConfigData[i]);
         }
     }
 
@@ -384,6 +424,7 @@ public class QuestionHandler : GameModeController
         yield return new WaitForSeconds(waitTime);
 
         UndoPreviousUIChange();
+        SetTimeLimit(questions_Array[currentQuestionNumber].i_category);
         SetOptionContents();
         Permutation();
         FindAnswerNumber();
@@ -395,18 +436,72 @@ public class QuestionHandler : GameModeController
     {
         SelectGamePlayStage(GamePlayStage.UndoPreviousUIChange);
 
+        //選項按鈕圖檔及顏色初始化
+
         for (int i = 0; i < optionBtnImage_Array.Length; i++)
         {
-            optionBtnImage_Array[i].color = new Color(0.9622642f, 0.3850217f, 0.2950338f);
+            optionBtnImage_Array[i].sprite = sprite_Array[0];
+            optionBtnImage_Array[i].color = originalBtnColor;
+            optionContentsText_Array[i].color = originalTextColor;
         }
 
-        pauseGameButtonObj.SetActive(true);
+        //pauseGameButtonObj.SetActive(true);
         player_CorrectObj.SetActive(false);
         player_IncorrectObj.SetActive(false);
 
         if (GameDataManager.Singleton.categoryStatus == CategoryStatus.NoArticle)
         {
             readAgainBtn.SetActive(false);
+        }
+
+        baseChineseText.text = "";
+        baseEnglishText.text = "";
+        progressText.text = rightAnswerTimes.ToString() + "/" + i_correct.ToString();
+    }
+
+    public void SetTimeLimit(int questionCategory)
+    {
+        switch (questionCategory)
+        {
+            case 1:
+                timeLimit = listConfigData[22].ai_data[0];
+                break;
+            case 2:
+                timeLimit = listConfigData[22].ai_data[1];
+                break;
+            case 3:
+                timeLimit = listConfigData[22].ai_data[2];
+                break;
+            case 4:
+                timeLimit = listConfigData[22].ai_data[3];
+                break;
+            case 5:
+                timeLimit = listConfigData[22].ai_data[4];
+                break;
+            case 6:
+                timeLimit = listConfigData[22].ai_data[5];
+                break;
+            case 7:
+                timeLimit = listConfigData[22].ai_data[6];
+                break;
+            case 8:
+                timeLimit = listConfigData[22].ai_data[7];
+                break;
+            case 9:
+                timeLimit = listConfigData[22].ai_data[8];
+                break;
+            case 10:
+                timeLimit = listConfigData[22].ai_data[9];
+                break;
+            case 11:
+                timeLimit = listConfigData[22].ai_data[10];
+                break;
+            case 12:
+                timeLimit = listConfigData[22].ai_data[11];
+                break;
+            default:
+                timeLimit = 10;
+                break;
         }
     }
 
@@ -478,7 +573,50 @@ public class QuestionHandler : GameModeController
         SelectGamePlayStage(GamePlayStage.ShowUIElements);
         ShowQuestion();
         ShowOptions();
+        SetBaseUI(questions_Array[currentQuestionNumber].i_category);
         startCountDown = true;
+    }
+
+    //這裡的套用字型只支援大寫英文字母，小寫英文字母無法顯示
+    public void SetBaseUI(int category)
+    {
+        switch (category)
+        {
+            case 1:
+            case 2:
+            case 3:
+                baseChineseText.text = "單字";
+                baseEnglishText.text = "VOCABULARY";
+                break;
+            case 4:
+            case 5:
+                baseChineseText.text = "文法";
+                baseEnglishText.text = "GRAMMAR";
+                break;
+            case 6:
+            case 7:
+                baseChineseText.text = "翻譯";
+                baseEnglishText.text = "TRANSLATION";
+                break;
+            case 8:
+                baseChineseText.text = "聽力";
+                baseEnglishText.text = "LISTENING";
+                break;
+            case 9:
+            case 10:
+            case 11:
+                baseChineseText.text = "閱讀";
+                baseEnglishText.text = "READING";
+                break;
+            case 12:
+                baseChineseText.text = "克漏字";
+                baseEnglishText.text = "CLOZE";
+                break;
+            default:
+                baseChineseText.text = "";
+                baseEnglishText.text = "";
+                break;
+        }
     }
 
     public void ShowQuestion()
@@ -515,16 +653,17 @@ public class QuestionHandler : GameModeController
     {
         SelectGamePlayStage(GamePlayStage.PlayerAnswer);    //狀態機的轉換是否都要有前置條件?
 
-        if (currentQuestionNumber == questionNumbers)
-        {
-        }
-        else
+        if (rightAnswerTimes < i_correct && wrongAnswerTimes < 3)
         {
             if (startCountDown == true && playerChoiceNumbers_Array[currentQuestionNumber] == 100) //倒數計時過程中才能選取答案
             {
                 playerChoiceNumbers_Array[currentQuestionNumber] = chooseNumber;
                 CheckAnswer();
             }
+        }
+        else
+        {
+            return;
         }
     }
 
@@ -543,7 +682,7 @@ public class QuestionHandler : GameModeController
             wrongAnswerTimes += 1;
         }
 
-        pauseGameButtonObj.SetActive(false);
+        //pauseGameButtonObj.SetActive(false);    //目前有這顆按鈕嗎?
         ShowAnswer();
 
         startCountDown = false;
@@ -559,41 +698,49 @@ public class QuestionHandler : GameModeController
 
         readAgainBtn.SetActive(false);
 
-        for (int i = 0; i < optionBtnImage_Array.Length; i++)
+        for (int i = 0; i < optionBtnImage_Array.Length; i++)   //先把每一顆按鈕圖片，色彩，及文字淡化
         {
-            optionBtnImage_Array[i].color = new Color(0.3396226f, 0.2685777f, 0.257921f, 0.6f);
+            optionBtnImage_Array[i].sprite = sprite_Array[1];
+            optionBtnImage_Array[i].color = fadeBtnColor;
+            optionContentsText_Array[i].color = fadeTextColor;
         }
 
-        optionBtnImage_Array[answerNumbers_Array[currentQuestionNumber]].color = new Color(0.9811321f, 0.6248419f, 0.01388392f);
+        if (playerChoiceNumbers_Array[currentQuestionNumber] < 3)   //把每玩家選擇的按鈕圖片，色彩，及文字標示錯誤
+        {
+            optionBtnImage_Array[playerChoiceNumbers_Array[currentQuestionNumber]].sprite = sprite_Array[2];
+            optionBtnImage_Array[playerChoiceNumbers_Array[currentQuestionNumber]].color = wrongBtnColor;
+            optionContentsText_Array[playerChoiceNumbers_Array[currentQuestionNumber]].color = wrongTextColor;
+        }
+
+        //把解答的按鈕圖片，色彩，及文字標示正確，如果與玩家的選項相同，就會蓋掉玩家錯誤的效果
+        optionBtnImage_Array[answerNumbers_Array[currentQuestionNumber]].sprite = sprite_Array[3];
+        optionBtnImage_Array[answerNumbers_Array[currentQuestionNumber]].color = rightBtnColor;
+        optionContentsText_Array[answerNumbers_Array[currentQuestionNumber]].color = rightTextColor;
     }
 
     public void SetToggles()
     {
-        for (int i = 0; i < 3; i++) //命只有 3 條
+        for (int i = 0; i < 3; i++) //橡皮擦只有 3 條，先把橡皮擦全部顯示出來
         {
-            heartRawImage_Array[i].texture = heartImageTexture_Array[1];
+            eraserRawImage_Array[i].enabled = true;
         }
 
-        for (int i = 0; i < wrongAnswerTimes; i++) //命只有 3 條
+        for (int i = 0; i < wrongAnswerTimes; i++) //再依照答錯的次數把橡皮擦隱藏起來
         {
-            heartRawImage_Array[i].texture = heartImageTexture_Array[0];
+            eraserRawImage_Array[i].enabled = false;
         }
 
-        for (int i = 0; i < questionNumbers; i++)
+        for (int i = 0; i < i_correct; i++)
         {
-            if (checkRawImage_Array.Length <= questionNumbers)
-            {
-                checkRawImage_Array[i].enabled = false;
-            }
+            checkRawObj_Array[i].SetActive(false);  //先把所有勾勾隱藏起來
         }
 
         for (int i = 0; i < rightAnswerTimes; i++)
         {
-            if (checkRawImage_Array.Length <= questionNumbers)
-            {
-                checkRawImage_Array[i].enabled = true;
-            }
+            checkRawObj_Array[i].SetActive(true);   //再依照答對的數量，把勾勾顯示出來
         }
+
+        progressText.text = rightAnswerTimes.ToString() + "/" + i_correct.ToString();
     }
 
     public void ShowNextQuestionOrEndGame()
@@ -612,7 +759,7 @@ public class QuestionHandler : GameModeController
             return;
         }
 
-        if (currentQuestionNumber == questionNumbers)
+        if (rightAnswerTimes >= i_correct)
         {
             IEnumerator coroutine = ShowGameResult();
             StartCoroutine(coroutine);
@@ -631,7 +778,7 @@ public class QuestionHandler : GameModeController
         float waitTime = 2;
         yield return new WaitForSeconds(waitTime);
 
-        if (rightAnswerTimes > 4)
+        if (rightAnswerTimes >= i_correct)
         {
             result_AObject.SetActive(true);
         }
@@ -648,22 +795,25 @@ public class QuestionHandler : GameModeController
 
         if (endResultBtn2 != null)
         {
+            endResultBtn2.onClick.RemoveAllListeners();
             endResultBtn2.onClick.AddListener(OnEndClick);
         }
+
+        UndoPreviousUIChange();
     }
 
     public void OnEndClick()
     {
-        Debug.LogFormat("OnEndClick");
         if (currentLifeCycleState != LifeCycleState.RESUME)
             return;
         currentLifeCycleState = LifeCycleState.PAUSE;
 
+        storyObj.SetActive(false);
+        assetsHeartsObj.SetActive(true);
+        assetsDimondsObj.SetActive(true);
+
         result_AObject.SetActive(false);
         result_BObject.SetActive(false);
-        questionBGObj.SetActive(false);
-        uI3D_CameraObj.SetActive(false);
-        assetsObj.SetActive(true);
 
         SetReviewData();
         //PopControllerAndPlayMode(this, GameMode.REVIEW);
@@ -676,6 +826,6 @@ public class QuestionHandler : GameModeController
         reviewHandler.answerNumbers_Array = answerNumbers_Array;
         reviewHandler.playerChoiceNumbers_Array = playerChoiceNumbers_Array;
         reviewHandler.AddReviewContent();
-        reviewHandler.toMapButtonObj.SetActive(true);
+//      reviewHandler.toMapButtonObj.SetActive(true);   //要改寫
     }
 }
