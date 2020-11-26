@@ -266,12 +266,14 @@ public class QuestionHandler : GameModeController
 
         if (GameDataManager.Singleton.categoryStatus == CategoryStatus.Article)
         {
-            SetArticleIndexes();
-            return;
+
+            SetQuestions();
+            UpdateUI();
+            //SetArticleIndexes();
+            //return;
         }
         else
         {
-            SetQuestionIndexes();
             SetQuestions();
             UpdateUI();
         }
@@ -376,39 +378,13 @@ public class QuestionHandler : GameModeController
         Debug.Log("設定文章編號");
     }
 
-    public void SetQuestionIndexes()
-    {
-        SelectGamePlayStage(GamePlayStage.SelectQuestion);
-
-        if (questionNumbers > databaseQuestionNumbers)  //題數必須要大於題庫數量，避免底下 while 迴圈出包
-        {
-            questionNumbers = databaseQuestionNumbers;
-        }
-
-        for (int i = 0; i < questionNumbers; i++)
-        {
-            int randomQuestionIndex = Random.Range(0, databaseQuestionNumbers) % databaseQuestionNumbers;
-
-            for (int j = 0; j < i; j++)
-            {
-                while (questionIDs_Array[j] == processedList[randomQuestionIndex].i_id)
-                {
-                    randomQuestionIndex = Random.Range(0, databaseQuestionNumbers) % databaseQuestionNumbers;
-                    j = 0;
-                }
-            }
-
-            questionIDs_Array[i] = processedList[randomQuestionIndex].i_id;
-        }
-    }
-
     public void SetQuestions()
     {
         SelectGamePlayStage(GamePlayStage.SetQuestion);
 
-        for (int i = 0; i < questionIDs_Array.Length; i++)
+        for (int i = 0; i < questions_Array.Length; i++)
         {
-            questions_Array[i] = processedList.Find((Question3 obj) => obj.i_id == questionIDs_Array[i]);
+            questions_Array[i] = processedList[i];
         }
     }
 
@@ -429,7 +405,6 @@ public class QuestionHandler : GameModeController
         Permutation();
         FindAnswerNumber();
         ShowUIComponents();
-
     }
 
     public void UndoPreviousUIChange()
